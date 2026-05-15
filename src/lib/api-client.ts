@@ -143,7 +143,15 @@ export const ictClient = {
     });
   },
 
-  async delete<T>(url: string): Promise<T> {
-    return request<T>(url, { method: "DELETE" });
+  async delete<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+    const queryString = params
+      ? "?" + new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)]),
+        ).toString()
+      : "";
+
+    return request<T>(`${url}${queryString}`, { method: "DELETE" });
   },
 };

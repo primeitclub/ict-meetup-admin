@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, Search, Upload } from "lucide-react";
 import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib";
@@ -23,6 +23,14 @@ export default function Events() {
     onError: (error) => toast.error(error.message || "Failed to delete event"),
   });
 
+  const BASE_HOST = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000/api").replace("/api", "");
+
+  const getImageUrl = (path: string) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return `${BASE_HOST}${path}`;
+  };
+
   const columns: ColumnDef<Event>[] = useMemo(() => [
     {
       accessorKey: "displayOrder",
@@ -30,29 +38,53 @@ export default function Events() {
       cell: ({ row }) => row.index + 1,
     },
     {
+      accessorKey: "image",
+      header: "Image",
+      cell: ({ row }) => (
+        <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#0B1730]">
+          {row.original.image ? (
+            <img src={getImageUrl(row.original.image)} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-600 bg-gray-800/50">
+              <Upload size={16} />
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
       accessorKey: "title",
       header: "Title",
     },
     {
-      accessorKey: "speakerName",
-      header: "Speaker",
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <div className="max-w-[200px] truncate text-gray-500" title={row.original.description}>
+          {row.original.description || "-"}
+        </div>
+      ),
     },
     {
-      accessorKey: "eventDate",
+      accessorKey: "date",
       header: "Date",
       cell: ({ row }) => {
-        const date = new Date(row.original.eventDate);
+        if (!row.original.date) return "-";
+        const date = new Date(row.original.date);
         return date.toLocaleDateString();
       },
     },
     {
       id: "time",
       header: "Start & End Time",
-      cell: ({ row }) => `${row.original.startTime} - ${row.original.endTime}`,
+      cell: ({ row }) => row.original.startTime && row.original.endTime 
+        ? `${row.original.startTime} - ${row.original.endTime}`
+        : "Register Now",
     },
     {
-      accessorKey: "location",
-      header: "Location",
+      id: "category",
+      header: "Category",
+      cell: ({ row }) => (row.original as any).category?.name || "-",
     },
     {
       accessorKey: "totalSeats",
@@ -63,6 +95,30 @@ export default function Events() {
       header: "Display order",
     },
     {
+      accessorKey: "feeType",
+      header: "Fee type",
+      cell: ({ row }) => (
+        <span className="capitalize">{row.original.feeType}</span>
+      ),
+    },
+    {
+      accessorKey: "registrationDeadline",
+      header: "Registration Close Deadline",
+      cell: ({ row }) => {
+        if (!row.original.registrationDeadline) return "-";
+        return new Date(row.original.registrationDeadline).toLocaleDateString();
+      },
+    },
+    {
+      accessorKey: "speakerName",
+      header: "Speaker",
+    },
+    {
+      id: "version",
+      header: "Flagship Version",
+      cell: ({ row }) => row.original.flagshipEventVersion?.version_name || "-",
+    },
+    {
       id: "actions",
       header: "Action",
       cell: ({ row }) => (
@@ -70,7 +126,10 @@ export default function Events() {
           editHref={`edit/${row.original.id}`}
           onDelete={() => {
             if (window.confirm("Are you sure you want to delete this event?")) {
-              deleteEvent(undefined, { pathParams: { eventId: row.original.id } });
+              deleteEvent(undefined, { 
+                pathParams: { eventId: row.original.id },
+                queryParams: { versionId: row.original.versionId }
+              });
             }
           }}
         />
@@ -85,18 +144,25 @@ export default function Events() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex-1 max-w-md">
-          {/* Table handles the search bar internally if showSearch is true, 
-              but the screenshot has buttons next to it. 
-              Let's see if we can customize the layout. */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search contents"
+              className="w-full bg-[#02111F] border border-[#031C33] rounded-xl py-2.5 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3571F0] text-sm"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              <Search size={18} />
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#0B1730] border border-gray-800 rounded-xl text-[#E6E6E6] hover:bg-[#152340] transition-colors font-medium">
+          <button className="flex items-center gap-2 px-4 py-2 bg-[#0B1730] border border-gray-800 rounded-xl text-[#E6E6E6] hover:bg-[#152340] transition-colors font-medium text-sm">
             <Filter size={18} className="text-gray-400" />
             Filter
           </button>
           <button
             onClick={() => navigate("add")}
-            className="flex items-center gap-2 px-4 py-2 bg-[#3571F0] hover:bg-[#3571F0]/90 text-white rounded-xl transition-colors font-medium"
+            className="flex items-center gap-2 px-6 py-2 bg-[#3571F0] hover:bg-[#3571F0]/90 text-white rounded-xl transition-colors font-medium text-sm"
           >
             <Plus size={20} />
             Add events
@@ -104,12 +170,14 @@ export default function Events() {
         </div>
       </div>
 
-      <Table 
-        columns={columns} 
-        data={items} 
-        onRefetch={refetch}
-        searchPlaceholder="Search contents"
-      />
+      <div className="overflow-x-auto rounded-xl border border-[#031C33] bg-[#02111F]">
+        <Table 
+          columns={columns} 
+          data={items} 
+          onRefetch={refetch}
+          showSearch={false}
+        />
+      </div>
 
       {isLoading && (
         <div className="flex justify-center py-8">

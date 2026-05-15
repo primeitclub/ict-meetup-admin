@@ -62,7 +62,7 @@ type UseApiMutationArgs<T, K extends ApiRouteKey> = PathParamsArg<K> & {
 };
 
 interface UseApiMutationResult<T, TPayload> {
-  execute: (payload?: TPayload, options?: { pathParams?: Record<string, string> }) => Promise<T>;
+  execute: (payload?: TPayload, options?: { pathParams?: Record<string, string>; queryParams?: Record<string, unknown> }) => Promise<T>;
   data: T | undefined;
   isLoading: boolean;
   isSuccess: boolean;
@@ -117,7 +117,7 @@ export function useApiMutation<K extends ApiRouteKey>(
     );
 
     const execute = useCallback(
-      async (payload?: TPayload, options?: { pathParams?: Record<string, string> }): Promise<T> => {
+      async (payload?: TPayload, options?: { pathParams?: Record<string, string>; queryParams?: Record<string, unknown> }): Promise<T> => {
         const finalUrl = options?.pathParams
           ? interpolatePath(pathTemplate, options.pathParams)
           : url;
@@ -140,7 +140,7 @@ export function useApiMutation<K extends ApiRouteKey>(
               result = await ictClient.patch<T>(finalUrl, payload);
               break;
             case "DELETE":
-              result = await ictClient.delete<T>(finalUrl);
+              result = await ictClient.delete<T>(finalUrl, options?.queryParams);
               break;
           }
 
