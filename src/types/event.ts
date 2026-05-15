@@ -5,7 +5,7 @@ export interface Event {
   title: string;
   subtitle?: string;
   description?: string;
-  image: string;
+  imagePath: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -26,7 +26,7 @@ export interface CreateEventPayload {
   title: string;
   subtitle?: string;
   description?: string;
-  image?: string;
+  imagePath?: string;
   date: string;
   startTime: string;
   endTime: string;

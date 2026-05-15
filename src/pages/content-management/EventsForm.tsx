@@ -110,7 +110,7 @@ export default function EventsForm() {
         location: event.location,
         status: event.status || "draft",
       });
-      if (event.image) setImagePreview(event.image);
+      if (event.imagePath) setImagePreview(event.imagePath);
     }
   }, [editData, reset]);
 
@@ -276,6 +276,15 @@ export default function EventsForm() {
                 placeholder="Enter display order"
                 rules={{ required: "Display order is required", min: 1 }}
               />
+
+              <div className="space-y-2">
+                <label className="block text-base text-[#E6E6E6]">Description</label>
+                <textarea
+                  {...methods.register("description")}
+                  placeholder="Enter event description"
+                  className="w-full bg-[#010B14] border border-[#1A2B44] rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3571F0] min-h-[150px] resize-none"
+                />
+              </div>
 
               <FormSelect
                 name="versionId"

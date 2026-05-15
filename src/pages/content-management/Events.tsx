@@ -34,31 +34,49 @@ export default function Events() {
   const columns: ColumnDef<Event>[] = useMemo(() => [
     {
       accessorKey: "displayOrder",
-      header: "ID",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>ID</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
       cell: ({ row }) => row.index + 1,
     },
     {
-      accessorKey: "image",
+      accessorKey: "imagePath",
       header: "Image",
-      cell: ({ row }) => (
-        <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#0B1730]">
-          {row.original.image ? (
-            <img src={getImageUrl(row.original.image)} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-600 bg-gray-800/50">
-              <Upload size={16} />
-            </div>
-          )}
+      cell: ({ row }) => {
+        const path = row.original.imagePath || (row.original as any).image;
+        return (
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#0B1730]">
+            {path ? (
+              <img src={getImageUrl(path)} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-600 bg-gray-800/50">
+                <Upload size={16} />
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "title",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Title</span>
+          <Filter size={14} className="text-gray-500" />
         </div>
       ),
     },
     {
-      accessorKey: "title",
-      header: "Title",
-    },
-    {
       accessorKey: "description",
-      header: "Description",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Description</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
       cell: ({ row }) => (
         <div className="max-w-[200px] truncate text-gray-500" title={row.original.description}>
           {row.original.description || "-"}
@@ -67,7 +85,12 @@ export default function Events() {
     },
     {
       accessorKey: "date",
-      header: "Date",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Date</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
       cell: ({ row }) => {
         if (!row.original.date) return "-";
         const date = new Date(row.original.date);
@@ -76,34 +99,64 @@ export default function Events() {
     },
     {
       id: "time",
-      header: "Start & End Time",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Start & End Time</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
       cell: ({ row }) => row.original.startTime && row.original.endTime 
         ? `${row.original.startTime} - ${row.original.endTime}`
         : "Register Now",
     },
     {
       id: "category",
-      header: "Category",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Category</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
       cell: ({ row }) => (row.original as any).category?.name || "-",
     },
     {
       accessorKey: "totalSeats",
-      header: "Total Seat",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Total Seat</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
     },
     {
       accessorKey: "displayOrder",
-      header: "Display order",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Display order</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
     },
     {
       accessorKey: "feeType",
-      header: "Fee type",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Fee type</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
       cell: ({ row }) => (
         <span className="capitalize">{row.original.feeType}</span>
       ),
     },
     {
       accessorKey: "registrationDeadline",
-      header: "Registration Close Deadline",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Registration Close Deadline</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
       cell: ({ row }) => {
         if (!row.original.registrationDeadline) return "-";
         return new Date(row.original.registrationDeadline).toLocaleDateString();
@@ -111,12 +164,22 @@ export default function Events() {
     },
     {
       accessorKey: "speakerName",
-      header: "Speaker",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Speaker</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
     },
     {
       id: "version",
-      header: "Flagship Version",
-      cell: ({ row }) => row.original.flagshipEventVersion?.version_name || "-",
+      header: () => (
+        <div className="flex items-center gap-2">
+          <span>Flagship Version</span>
+          <Filter size={14} className="text-gray-500" />
+        </div>
+      ),
+      cell: ({ row }) => (row.original as any).flagshipEvent?.version_name || "-",
     },
     {
       id: "actions",

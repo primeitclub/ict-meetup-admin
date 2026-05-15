@@ -7,7 +7,7 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import EmptyCart from "../../assets/icons/EmptyCart";
 
 interface TableProps<TData, TValue> {
@@ -69,8 +69,8 @@ export default function Table<TData, TValue>({
          </div>
         )}
       </div>
-      <div className="w-full overflow-x-auto rounded-lg border border-gray-800 bg-admin-primary">
-        <table className="w-full text-sm text-left align-middle ">
+      <div className="w-full overflow-x-auto rounded-lg border border-gray-800 bg-admin-primary custom-scrollbar">
+        <table className="w-full text-sm text-left align-middle min-w-[1200px]">
           <thead className="text-white bg-[#02111F] whitespace-nowrap">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -95,7 +95,7 @@ export default function Table<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <tr key={row.id} className="hover:bg-white/5 transition-colors">
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="p-4">
+                    <td key={cell.id} className="p-4 whitespace-nowrap">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
@@ -125,45 +125,39 @@ export default function Table<TData, TValue>({
         </table>
       </div>
 
-      {/* Pagination UI */}
-      {/* <div className="flex items-center justify-between text-sm text-gray-400 mt-4">
-        <div className="flex items-center space-x-2">
-          <span>
-            Page <span className="font-medium text-white">{table.getState().pagination.pageIndex + 1}</span> of{" "}
-            <span className="font-medium text-white">{table.getPageCount() || 1}</span>
-          </span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => {
-              table.setPageSize(Number(e.target.value));
-            }}
-            className="bg-admin-primary border border-gray-800 text-white rounded p-1 outline-none focus:border-admin-secondary transition-colors"
-          >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
+      <div className="flex items-center justify-between text-sm text-gray-400 mt-4 px-2 pb-2">
+        <div className="flex items-center gap-1">
+          Showing <span className="text-white font-medium">{table.getRowModel().rows.length}</span> of <span className="text-white font-medium">{data.length}</span> results
         </div>
-
-        <div className="flex space-x-2">
+        
+        <div className="flex items-center gap-2">
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="px-3 py-1 rounded border border-gray-800 bg-admin-primary text-gray-300 hover:bg-[#1E1E1E] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="p-2 rounded-lg border border-gray-800 hover:bg-gray-800 disabled:opacity-50 transition-all text-gray-400 hover:text-white"
           >
-            Previous
+            <ChevronLeft size={18} />
           </button>
+          
+          <div className="flex items-center gap-1">
+            <span className="text-white font-medium px-3 py-1 bg-[#3571F0] rounded-md">
+              {table.getState().pagination.pageIndex + 1}
+            </span>
+            <span className="px-2">of</span>
+            <span className="text-white font-medium">
+              {table.getPageCount() || 1}
+            </span>
+          </div>
+
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="px-3 py-1 rounded border border-gray-800 bg-admin-primary text-gray-300 hover:bg-[#1E1E1E] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="p-2 rounded-lg border border-gray-800 hover:bg-gray-800 disabled:opacity-50 transition-all text-gray-400 hover:text-white"
           >
-            Next
+            <ChevronRight size={18} />
           </button>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 }
