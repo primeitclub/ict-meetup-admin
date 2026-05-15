@@ -31,6 +31,7 @@ const ContentManagementRouter = () => {
         <Route path="events">
           <Route index element={<ContentEvents />} />
           <Route path="add" element={<EventsForm />} />
+          <Route path="edit/:id" element={<EventsForm />} />
         </Route>
         <Route path="gallery">
           <Route index element={<Gallery />} />
