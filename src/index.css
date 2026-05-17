@@ -29,7 +29,7 @@
 
 /* React Datepicker Dark Theme Overrides */
 .react-datepicker {
-  @apply bg-[#01060A] border border-gray-800 font-sans text-white rounded-lg shadow-2xl !important;
+  @apply bg-[#01060A] border border-gray-800 font-sans text-[#B3B3B3] rounded-lg shadow-2xl !important;
 }
 
 .react-datepicker__header {
@@ -84,4 +84,19 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-600;
+}
+
+
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  /* Filter black to approximately #B3B3B3 */
+  filter: invert(20%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
 }

@@ -33,11 +33,11 @@ export default function Events() {
 
   const columns: ColumnDef<Event>[] = useMemo(() => [
     {
-      accessorKey: "displayOrder",
+      id: "index",  
       header: () => (
         <div className="flex items-center gap-2">
           <span>ID</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
       cell: ({ row }) => row.index + 1,
@@ -53,7 +53,7 @@ export default function Events() {
               <img src={getImageUrl(path)} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-600 bg-gray-800/50">
-                <Upload size={16} />
+                <Upload size={18} />
               </div>
             )}
           </div>
@@ -65,7 +65,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Title</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
     },
@@ -74,7 +74,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Description</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
       cell: ({ row }) => (
@@ -88,7 +88,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Date</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
       cell: ({ row }) => {
@@ -102,7 +102,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Start & End Time</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
       cell: ({ row }) => row.original.startTime && row.original.endTime 
@@ -114,7 +114,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Category</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
       cell: ({ row }) => (row.original as any).category?.name || "-",
@@ -124,7 +124,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Total Seat</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
     },
@@ -133,7 +133,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Display order</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
     },
@@ -142,7 +142,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Fee type</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
       cell: ({ row }) => (
@@ -154,7 +154,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Registration Close Deadline</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-gray-500" />
         </div>
       ),
       cell: ({ row }) => {
@@ -167,7 +167,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Speaker</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-gray-500" />
         </div>
       ),
     },
@@ -176,7 +176,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Flagship Version</span>
-          <Filter size={14} className="text-gray-500" />
+          <Filter size={18} className="text-gray-500" />
         </div>
       ),
       cell: ({ row }) => (row.original as any).flagshipEvent?.version_name || "-",
@@ -207,16 +207,7 @@ export default function Events() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex-1 max-w-md">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search contents"
-              className="w-full bg-[#02111F] border border-[#031C33] rounded-xl py-2.5 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3571F0] text-sm"
-            />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-              <Search size={18} />
-            </div>
-          </div>
+          
         </div>
         <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 px-4 py-2 bg-[#0B1730] border border-gray-800 rounded-xl text-[#E6E6E6] hover:bg-[#152340] transition-colors font-medium text-sm">
@@ -233,14 +224,14 @@ export default function Events() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-[#031C33] bg-[#02111F]">
+      
         <Table 
           columns={columns} 
           data={items} 
           onRefetch={refetch}
-          showSearch={false}
+       
         />
-      </div>
+   
 
       {isLoading && (
         <div className="flex justify-center py-8">

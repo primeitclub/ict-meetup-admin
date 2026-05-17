@@ -10,6 +10,7 @@ import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import type { Event, CreateEventPayload } from "../../types/event";
 import toast from "react-hot-toast";
+import UploadIcon from "../../assets/icons/Upload";
 
 const feeTypeOptions = [
   { label: "Free", value: "free" },
@@ -77,7 +78,7 @@ export default function EventsForm() {
       displayOrder: 1,
       versionId: "",
       categoryId: "",
-      speakerName: "", // Note: backend uses speakerId, but form uses speakerName? Let's check.
+      speakerName: "", 
       feeType: "free",
       location: "",
       status: "draft",
@@ -164,17 +165,17 @@ export default function EventsForm() {
         <Link to="/content-management" className="text-[#CCCCCC] hover:text-white transition-colors font-medium">
           Content management
         </Link>
-        <ChevronRight size={14} className="text-[#666666]" />
+        <ChevronRight size={14} className="text-[#E6E6E6]" />
         <Link to="/content-management/events" className="text-[#CCCCCC] hover:text-white transition-colors font-medium">
           Events
         </Link>
-        <ChevronRight size={14} className="text-[#666666]" />
-        <span className="text-white font-bold">Add events</span>
+        <ChevronRight size={14} className="text-[#E6E6E6]" />
+        <span className="text-[#E6E6E6] font-bold">Add events</span>
       </nav>
 
       <div className="space-y-1">
-        <h2 className="text-[32px] font-bold text-white">Fill below fields</h2>
-        <p className="text-[#999999] text-sm max-w-2xl">
+        <h2 className="text-[32px] font-bold text-[#E6E6E6]">Fill below fields</h2>
+        <p className="text-[#CCCCCC] text-sm max-w-4xl">
           Provide the details below to add new event content. Please ensure all information is accurate before submitting the form.
         </p>
       </div>
@@ -207,11 +208,11 @@ export default function EventsForm() {
                     </>
                   ) : (
                     <>
-                      <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mb-4">
-                        <Upload size={24} className="text-white" />
+                      <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-4">
+                        <UploadIcon size={24} className="text-white" />
                       </div>
-                      <p className="text-white text-lg font-medium">Click to upload or drag and drop</p>
-                      <p className="text-[#999999] text-sm mt-1">SVG, PNG, JPG or GIF (max. 5MB)</p>
+                      <p className="text-[#E6E6E6] text-lg font-medium">Click to upload or drag and drop</p>
+                      <p className="text-[#CCCCCC] text-sm mt-1">SVG, PNG, JPG or GIF (max. 5MB)</p>
                     </>
                   )}
                   <input
@@ -231,15 +232,16 @@ export default function EventsForm() {
                 rules={{ required: "Event date is required" }}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 ">
                 <FormInput
                   name="startTime"
                   label="Start & End Time"
                   type="time"
                   placeholder="Select event time"
+                
                   rules={{ required: "Start time is required" }}
                 />
-                <div className="pt-8">
+                <div className="pt-6">
                   <FormInput
                     name="endTime"
                     label=""
