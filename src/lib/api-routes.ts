@@ -49,10 +49,10 @@ export const API_ROUTES = {
   faqs: "/faqs",
   faqDetail: "/faqs/${id}",
 
-  // ─── Settings ─────────────────────────────────────────────────────────────
-  socialMedia: "/settings/social-media",
-  contacts: "/settings/contacts",
-  payments: "/settings/payments",
+  // ─── Settings (see lib/settings/settings-api.ts for social/contact/payment helpers)
+  settings: "/settings",
+  settingsDetail: "/settings/${id}",
+  settingsQrCode: "/settings/${id}/qrcode",
 } as const;
 
 /**
