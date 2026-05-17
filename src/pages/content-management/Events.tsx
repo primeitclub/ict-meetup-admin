@@ -154,7 +154,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Registration Close Deadline</span>
-          <Filter size={18} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
       cell: ({ row }) => {
@@ -167,7 +167,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Speaker</span>
-          <Filter size={18} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
     },
@@ -176,7 +176,7 @@ export default function Events() {
       header: () => (
         <div className="flex items-center gap-2">
           <span>Flagship Version</span>
-          <Filter size={18} className="text-gray-500" />
+          <Filter size={18} className="text-[#E6E6E6]" />
         </div>
       ),
       cell: ({ row }) => (row.original as any).flagshipEvent?.version_name || "-",
@@ -204,11 +204,8 @@ export default function Events() {
   const items = data?.data?.items ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex-1 max-w-md">
-          
-        </div>
+    <div className="space-y-6 min-w-0 w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
         <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 px-4 py-2 bg-[#0B1730] border border-gray-800 rounded-xl text-[#E6E6E6] hover:bg-[#152340] transition-colors font-medium text-sm">
             <Filter size={18} className="text-gray-400" />
