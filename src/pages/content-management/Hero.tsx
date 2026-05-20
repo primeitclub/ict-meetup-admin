@@ -11,63 +11,79 @@ import toast from "react-hot-toast";
 export default function Hero() {
   const navigate = useNavigate();
 
-  const { data, isLoading, refetch } = useApiQuery("heroSections")<{ data: { items: HeroSection[] } }>();
+  const { data, isLoading, refetch } = useApiQuery("heroSections")<{
+    data: { items: HeroSection[] };
+  }>();
 
-  const { execute: deleteHeroSection } = useApiMutation("heroSectionDetail")<void, never>({
+  const { execute: deleteHeroSection } = useApiMutation("heroSectionDetail")<
+    void,
+    never
+  >({
     method: "DELETE",
     onSuccess: () => refetch(),
-    onError: (error) => toast.error(error.message || "Failed to delete hero section"),
+    onError: (error) =>
+      toast.error(error.message || "Failed to delete hero section"),
   });
 
-  const columns: ColumnDef<HeroSection>[] = useMemo(() => [
-    {
-      id: "sn",
-      header: "S.N",
-      cell: ({ row }) => row.index + 1,
-    },
-    {
-      accessorKey: "heading",
-      header: "Title",
-    },
-    {
-      accessorKey: "paragraph",
-      header: "Description",
-    },
-    {
-      header: "Version",
-      accessorKey: "flagshipEventVersion.version_number",
-      cell: ({ row }) => {
-        const version = row.original.flagshipEventVersion;
-        return (
-          <div>
-            {version.version_number}
-            {version.is_current && (
-              <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
-            )}
-          </div>
-        );
+  const columns: ColumnDef<HeroSection>[] = useMemo(
+    () => [
+      {
+        id: "sn",
+        header: "S.N",
+        cell: ({ row }) => row.index + 1,
       },
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Last Updated",
-      cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleDateString(),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <TableRowActions
-          editHref={`edit/${row.original.id}`}
-          onDelete={() => {
-            if (window.confirm("Are you sure you want to delete this hero section?")) {
-              deleteHeroSection(undefined, { pathParams: { id: row.original.id } });
-            }
-          }}
-        />
-      ),
-    },
-  ], [deleteHeroSection]);
+      {
+        accessorKey: "heading",
+        header: "Title",
+      },
+      {
+        accessorKey: "paragraph",
+        header: "Description",
+      },
+      {
+        header: "Version",
+        accessorKey: "flagshipEventVersion.version_number",
+        cell: ({ row }) => {
+          const version = row.original.flagshipEventVersion;
+          return (
+            <div>
+              {version.version_number}
+              {version.is_current && (
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Last Updated",
+        cell: ({ row }) =>
+          new Date(row.getValue("updatedAt")).toLocaleDateString(),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <TableRowActions
+            editHref={`edit/${row.original.id}`}
+            onDelete={() => {
+              if (
+                window.confirm(
+                  "Are you sure you want to delete this hero section?",
+                )
+              ) {
+                deleteHeroSection(undefined, {
+                  pathParams: { id: row.original.id },
+                });
+              }
+            }}
+          />
+        ),
+      },
+    ],
+    [deleteHeroSection],
+  );
 
   const items = data?.data?.items ?? [];
 

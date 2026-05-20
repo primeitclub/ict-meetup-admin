@@ -27,6 +27,7 @@ const ContentManagementRouter = () => {
         <Route path="about">
           <Route index element={<About />} />
           <Route path="add" element={<AboutForm />} />
+          <Route path="edit/:id" element={<AboutForm />} />
         </Route>
         <Route path="events">
           <Route index element={<ContentEvents />} />
@@ -39,6 +40,7 @@ const ContentManagementRouter = () => {
         <Route path="faqs">
           <Route index element={<Faqs />} />
           <Route path="add" element={<FaqsForm />} />
+          <Route path="edit/:id" element={<FaqsForm />} />
         </Route>
       </Route>
     </Routes>

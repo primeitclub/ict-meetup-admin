@@ -5,7 +5,8 @@
  * auth headers, base URL, and error formatting live in one place.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000/api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000/api";
 
 // ─── Error Class ──────────────────────────────────────────────────────────────
 
@@ -13,11 +14,7 @@ export class ApiError extends Error {
   public status: number;
   public data?: unknown;
 
-  constructor(
-    message: string,
-    status: number,
-    data?: unknown,
-  ) {
+  constructor(message: string, status: number, data?: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -29,13 +26,13 @@ export class ApiError extends Error {
 
 function getAuthHeaders(body?: unknown): Record<string, string> {
   const headers: Record<string, string> = {};
-  
+
   // Only set application/json if we aren't sending FormData
   // Browser automatically sets Content-Type for FormData with the correct boundary
   if (!(body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
-  
+
   return headers;
 }
 
@@ -69,10 +66,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
 async function request<T>(
   url: string,
   options: RequestInit = {},
-  isRetry = false
+  isRetry = false,
 ): Promise<T> {
   const fullUrl = `${API_BASE_URL}${url}`;
-  
+
   const response = await fetch(fullUrl, {
     ...options,
     headers: {
@@ -85,10 +82,13 @@ async function request<T>(
   // Handle 401 Unauthorized - Attempt token refresh
   if (response.status === 401 && !isRetry) {
     try {
-      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
-        method: "POST",
-        credentials: "include",
-      });
+      const refreshResponse = await fetch(
+        `${API_BASE_URL}/auth/refresh-token`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
 
       if (refreshResponse.ok) {
         // Refresh successful! Retry the original request exactly once.
@@ -112,7 +112,8 @@ async function request<T>(
 export const ictClient = {
   async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
     const queryString = params
-      ? "?" + new URLSearchParams(
+      ? "?" +
+        new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
             .map(([k, v]) => [k, String(v)]),
@@ -125,21 +126,36 @@ export const ictClient = {
   async post<T>(url: string, body?: unknown): Promise<T> {
     return request<T>(url, {
       method: "POST",
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      body:
+        body instanceof FormData
+          ? body
+          : body
+            ? JSON.stringify(body)
+            : undefined,
     });
   },
 
   async put<T>(url: string, body?: unknown): Promise<T> {
     return request<T>(url, {
       method: "PUT",
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      body:
+        body instanceof FormData
+          ? body
+          : body
+            ? JSON.stringify(body)
+            : undefined,
     });
   },
 
   async patch<T>(url: string, body?: unknown): Promise<T> {
     return request<T>(url, {
       method: "PATCH",
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      body:
+        body instanceof FormData
+          ? body
+          : body
+            ? JSON.stringify(body)
+            : undefined,
     });
   },
 

@@ -29,13 +29,26 @@ export default function HeroForm() {
   const isEditMode = !!id;
 
   const { data: versionsData, isLoading: versionsLoading } = useGetVersions();
-  const { execute: createHeroSection, isLoading: isCreating } = useCreateHeroSection();
-  const { execute: updateHeroSection, isLoading: isUpdating } = useApiMutation("heroSectionDetail")<
+  const { execute: createHeroSection, isLoading: isCreating } =
+    useCreateHeroSection();
+  const { execute: updateHeroSection, isLoading: isUpdating } = useApiMutation(
+    "heroSectionDetail",
+  )<
     { data: HeroSection },
-    Omit<HeroSection, "id" | "createdAt" | "updatedAt" | "createdById" | "modifiedById" | "flagshipEventVersion">
+    Omit<
+      HeroSection,
+      | "id"
+      | "createdAt"
+      | "updatedAt"
+      | "createdById"
+      | "modifiedById"
+      | "flagshipEventVersion"
+    >
   >({ method: "PUT", invalidateRoutes: ["heroSections"] });
 
-  const { data: editData } = useApiQuery("heroSectionDetail")<{ data: HeroSection }>({
+  const { data: editData } = useApiQuery("heroSectionDetail")<{
+    data: HeroSection;
+  }>({
     pathParams: { id: id! },
     enabled: isEditMode,
   });
@@ -61,7 +74,10 @@ export default function HeroForm() {
     formState: { errors },
   } = methods;
 
-  const { fields, append, remove } = useFieldArray({ name: "add_cta", control });
+  const { fields, append, remove } = useFieldArray({
+    name: "add_cta",
+    control,
+  });
 
   useEffect(() => {
     if (editData?.data) {
@@ -87,7 +103,7 @@ export default function HeroForm() {
 
     try {
       if (isEditMode) {
-        await updateHeroSection(payload , { pathParams: { id: id! } });
+        await updateHeroSection(payload, { pathParams: { id: id! } });
         toast.success("Hero section updated successfully");
       } else {
         await createHeroSection(payload);
@@ -95,7 +111,11 @@ export default function HeroForm() {
       }
       navigate(-1);
     } catch {
-      toast.error(isEditMode ? "Failed to update hero section" : "Failed to create hero section");
+      toast.error(
+        isEditMode
+          ? "Failed to update hero section"
+          : "Failed to create hero section",
+      );
     }
   };
 
@@ -111,10 +131,13 @@ export default function HeroForm() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold">{isEditMode ? "Edit Hero Section" : "Fill below fields"}</h2>
+        <h2 className="text-2xl font-bold">
+          {isEditMode ? "Edit Hero Section" : "Fill below fields"}
+        </h2>
         <p className="text-gray-400 mt-1">
-          Provide the details below to {isEditMode ? "update the" : "add new"} hero content. Please ensure all
-          information is accurate before submitting the form.
+          Provide the details below to {isEditMode ? "update the" : "add new"}{" "}
+          hero content. Please ensure all information is accurate before
+          submitting the form.
         </p>
       </div>
 
@@ -134,7 +157,9 @@ export default function HeroForm() {
               <Textarea
                 label="Description"
                 placeholder="Enter hero description"
-                {...register("description", { required: "Description is required" })}
+                {...register("description", {
+                  required: "Description is required",
+                })}
                 error={errors.description?.message}
               />
             </div>
@@ -215,7 +240,11 @@ export default function HeroForm() {
               disabled={isSubmitting}
               className="px-6 py-2 rounded-md bg-admin-secondary text-white hover:bg-admin-secondary/80 focus:ring-2 focus:ring-offset-2 focus:ring-offset-admin-primary focus:ring-admin-secondary transition-colors font-medium disabled:opacity-50"
             >
-              {isSubmitting ? "Saving..." : isEditMode ? "Update" : "Save Default"}
+              {isSubmitting
+                ? "Saving..."
+                : isEditMode
+                  ? "Update"
+                  : "Save Default"}
             </button>
           </div>
         </form>
