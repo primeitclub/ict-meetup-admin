@@ -1,8 +1,9 @@
+import { Mic, Users2 } from "lucide-react";
 import RenderSubRoute from "../../components/navigation/RenderSubRoute";
 
 const routes = [
-  { label: "Speakers", path: "speakers" },
-  { label: "Teams", path: "teams" },
+  { label: "Speakers", path: "speakers", icon: Mic },
+  { label: "Teams", path: "teams", icon: Users2 },
 ];
 
 const baseRoute = "people";

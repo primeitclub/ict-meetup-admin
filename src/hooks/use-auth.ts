@@ -25,7 +25,6 @@ interface LoginPayload {
   password: string;
 }
 
-
 export interface UseAuthResult {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -51,7 +50,8 @@ export function useAuth(): UseAuthResult {
     };
 
     window.addEventListener("ict-auth-failure", handleAuthFailure);
-    return () => window.removeEventListener("ict-auth-failure", handleAuthFailure);
+    return () =>
+      window.removeEventListener("ict-auth-failure", handleAuthFailure);
   }, [clearUser, navigate]);
 
   // login mutation
@@ -73,7 +73,6 @@ export function useAuth(): UseAuthResult {
   const login = useCallback(
     async (payload: LoginPayload) => {
       await executeLogin(payload);
-      // Since the backend returns null for data, we set a dummy user 
       // to trigger the authenticated state in the UI.
       setUser({ userId: "admin", email: payload.email, role: "admin" });
     },
@@ -81,20 +80,21 @@ export function useAuth(): UseAuthResult {
   );
 
   // logout mutation
-  const { execute: executeLogout, isLoading: isLoggingOut } =
-    useApiMutation("logout")<void, never>({
-      method: "POST",
-      onSuccess: () => {
-        clearUser();
-        navigate("/login");
-        toast.success("Logged out successfully");
-      },
-      onError: () => {
-        // Force-clear local state even if server fails
-        clearUser();
-        navigate("/login");
-      },
-    });
+  const { execute: executeLogout, isLoading: isLoggingOut } = useApiMutation(
+    "logout",
+  )<void, never>({
+    method: "POST",
+    onSuccess: () => {
+      clearUser();
+      navigate("/login");
+      toast.success("Logged out successfully");
+    },
+    onError: () => {
+      // Force-clear local state even if server fails
+      clearUser();
+      navigate("/login");
+    },
+  });
 
   const logout = useCallback(async () => {
     await executeLogout();

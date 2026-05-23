@@ -11,6 +11,17 @@
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ICT Admin</title>
+    <script>
+      // Apply saved theme before first paint to avoid a flash of the wrong
+      // theme. Default is light (no class); only "dark" adds the class.
+      (function () {
+        try {
+          if (localStorage.getItem("ict_admin_theme") === "dark") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -78,10 +78,10 @@ const Text = React.forwardRef<HTMLParagraphElement, TextProps>(
 
     // Variant styles (primarily color-based)
     const variantStyles: Record<TextVariant, string> = {
-      body: "text-primary",
-      lead: "text-primary text-lg md:text-xl",
-      small: "text-secondary text-sm",
-      muted: "text-tertiary",
+      body: "text-foreground",
+      lead: "text-foreground text-lg md:text-xl",
+      small: "text-muted-foreground text-sm",
+      muted: "text-muted-foreground",
       error: "text-error",
       success: "text-success",
       warning: "text-warning",

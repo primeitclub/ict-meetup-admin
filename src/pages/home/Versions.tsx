@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { CheckCircle2, FileText } from "lucide-react";
+import { CheckCircle2, FileText, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
 import TableRowActions from "../../components/table/TableRowActions";
@@ -49,7 +49,9 @@ export default function Versions() {
                 <FileText size={16} />
               </div>
             )}
-            <span className="font-medium">{info.row.original.version_name}</span>
+            <span className="font-medium">
+              {info.row.original.version_name}
+            </span>
           </div>
         ),
       },
@@ -101,8 +103,12 @@ export default function Versions() {
           <TableRowActions
             editHref={`edit/${info.row.original.id}`}
             onDelete={() => {
-              if (window.confirm("Are you sure you want to delete this version?")) {
-                deleteVersion(undefined, { pathParams: { id: info.row.original.id } });
+              if (
+                window.confirm("Are you sure you want to delete this version?")
+              ) {
+                deleteVersion(undefined, {
+                  pathParams: { id: info.row.original.id },
+                });
               }
             }}
           />
@@ -114,35 +120,22 @@ export default function Versions() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Hero Content</h2>
-          <p className="text-gray-400 text-sm mt-1">
-            Manage the hero section data for your landing page.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("add")}
-          className="bg-admin-secondary hover:bg-admin-secondary/80 text-white px-4 py-2 rounded-md transition-colors font-medium"
-        >
-          Add New Content
-        </button>
-      </div>
-
-      <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-xl">
-        <Table
-          columns={columns}
-          data={data?.data?.items || []}
-          searchPlaceholder="Search versions..."
-          onRefetch={refetch}
-        />
-        {isLoading && (
-          <div className="flex justify-center py-8">
-            <div className="w-8 h-8 border-2 border-zinc-700 border-t-blue-500 rounded-full animate-spin" />
-          </div>
-        )}
-      </div>
+      <Table
+        columns={columns}
+        isLoading={isLoading}
+        data={data?.data?.items || []}
+        searchPlaceholder="Search versions..."
+        onRefetch={refetch}
+        actionRight={
+          <button
+            onClick={() => navigate("add")}
+            className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus size={16} />
+            Add version
+          </button>
+        }
+      />
     </div>
   );
 }
-

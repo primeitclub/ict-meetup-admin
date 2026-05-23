@@ -135,7 +135,7 @@ export default function VersionForm() {
   const isLoading = isCreating || isUpdating || isFetching;
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="w-full h-full space-y-6">
       <div className="flex items-center space-x-4">
         <button
           onClick={() => navigate(-1)}
@@ -148,7 +148,7 @@ export default function VersionForm() {
         </h1>
       </div>
 
-      <div className="bg-admin-primary border border-gray-800 rounded-lg p-6 shadow-xl">
+      <div className="bg-admin-primary border border-gray-800 rounded-lg p-6 shadow-xl w-full">
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
