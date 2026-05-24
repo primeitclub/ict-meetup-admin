@@ -26,12 +26,12 @@ export default function Breadcrumb() {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex items-center gap-2 text-sm text-muted-foreground"
+      className="flex items-center gap-2 text-sm text-foreground"
     >
       <Link
         to={sectionHref}
         className={`flex items-center text-foreground gap-1.5 transition-colors ${
-          isSectionLeaf ? "text-foreground" : "hover:text-foreground"
+          isSectionLeaf ? "text-foreground" : "hover:text-foreground/40"
         }`}
       >
         <SectionIcon size={16} />
@@ -40,13 +40,13 @@ export default function Breadcrumb() {
 
       {child && childHref && (
         <>
-          <ChevronRight size={14} className="text-muted-foreground/60" />
+          <ChevronRight size={14} className="text-foreground" />
           {isChildLeaf ? (
             <span className="text-foreground font-medium">{child.label}</span>
           ) : (
             <Link
               to={childHref}
-              className="hover:text-foreground transition-colors"
+              className="hover:text-foreground/40 text-foreground"
             >
               {child.label}
             </Link>

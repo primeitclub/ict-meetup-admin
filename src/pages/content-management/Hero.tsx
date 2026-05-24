@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -8,6 +8,7 @@ import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import type { HeroSection } from "../../types/hero";
 import toast from "react-hot-toast";
+import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 
 export default function Hero() {
   const navigate = useNavigate();
@@ -16,15 +17,35 @@ export default function Hero() {
     data: { items: HeroSection[] };
   }>();
 
-  const { execute: deleteHeroSection } = useApiMutation("heroSectionDetail")<
-    void,
-    never
-  >({
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { execute: deleteHeroSection, isLoading: isDeleting } = useApiMutation(
+    "heroSectionDetail",
+  )<void, never>({
     method: "DELETE",
     onSuccess: () => refetch(),
     onError: (error) =>
       toast.error(error.message || "Failed to delete hero section"),
   });
+
+  // Opens the confirm dialog for a row and remembers which id to delete.
+  const handleDelete = useCallback(
+    (id: string) => {
+      setDeleteId(id);
+      setConfirmOpen(true);
+    },
+    [setDeleteId, setConfirmOpen],
+  );
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteHeroSection(undefined, { pathParams: { id: deleteId } });
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
 
   const columns: ColumnDef<HeroSection>[] = useMemo(
     () => [
@@ -68,22 +89,12 @@ export default function Hero() {
         cell: ({ row }) => (
           <TableRowActions
             editHref={`edit/${row.original.id}`}
-            onDelete={() => {
-              if (
-                window.confirm(
-                  "Are you sure you want to delete this hero section?",
-                )
-              ) {
-                deleteHeroSection(undefined, {
-                  pathParams: { id: row.original.id },
-                });
-              }
-            }}
+            onDelete={() => handleDelete(row.original.id)}
           />
         ),
       },
     ],
-    [deleteHeroSection],
+    [handleDelete],
   );
 
   const items = data?.data?.items ?? [];
@@ -109,6 +120,17 @@ export default function Hero() {
           <div className="w-8 h-8 border-2 border-gray-800 border-t-admin-secondary rounded-full animate-spin" />
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete hero section?"
+        description="This will permanently delete this hero section. This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

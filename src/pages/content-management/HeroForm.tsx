@@ -1,26 +1,23 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm, useFieldArray, FormProvider } from "react-hook-form";
-import { Plus, Trash2 } from "lucide-react";
+import { useForm, FormProvider } from "react-hook-form";
+import { Save } from "lucide-react";
 import FormInput from "../../components/form-field/input-field/InputController";
 import FormSelect from "../../components/form-field/input-select/SelectController";
 import Textarea from "../../components/form-field/Textarea";
-import useGetVersions from "../../lib/hooks/use-get-versions";
+import useGetVersionOptions from "../../lib/hooks/use-get-version-options";
 import useCreateHeroSection from "../../lib/hooks/use-create-hero-section";
-import { EventVersionStatus } from "../../types/version";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import type { HeroSection } from "../../types/hero";
 import toast from "react-hot-toast";
+import Divider from "../../shared/design-components/divider/Divider";
+import { Text } from "../../shared/design-components";
 
 type HeroFormValues = {
   title: string;
   description: string;
   flagship_versions: string;
-  add_cta: {
-    cta_title: string;
-    cta_url: string;
-  }[];
 };
 
 export default function HeroForm() {
@@ -28,40 +25,46 @@ export default function HeroForm() {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
 
-  const { data: versionsData, isLoading: versionsLoading } = useGetVersions();
-  const { execute: createHeroSection, isLoading: isCreating } = useCreateHeroSection();
-  const { execute: updateHeroSection, isLoading: isUpdating } = useApiMutation("heroSectionDetail")<
+  const { options: versionOptions, isLoading: versionsLoading } =
+    useGetVersionOptions();
+  const { execute: createHeroSection, isLoading: isCreating } =
+    useCreateHeroSection();
+  const { execute: updateHeroSection, isLoading: isUpdating } = useApiMutation(
+    "heroSectionDetail",
+  )<
     { data: HeroSection },
-    Omit<HeroSection, "id" | "createdAt" | "updatedAt" | "createdById" | "modifiedById" | "flagshipEventVersion">
+    Omit<
+      HeroSection,
+      | "id"
+      | "createdAt"
+      | "updatedAt"
+      | "createdById"
+      | "modifiedById"
+      | "flagshipEventVersion"
+    >
   >({ method: "PUT", invalidateRoutes: ["heroSections"] });
 
-  const { data: editData } = useApiQuery("heroSectionDetail")<{ data: HeroSection }>({
+  const { data: editData } = useApiQuery("heroSectionDetail")<{
+    data: HeroSection;
+  }>({
     pathParams: { id: id! },
     enabled: isEditMode,
   });
-
-  const versionOptions = versionsData?.data.items
-    .filter((item) => item.status === EventVersionStatus.DRAFT)
-    .map((item) => ({ label: item.version_name, value: item.id }));
 
   const methods = useForm<HeroFormValues>({
     defaultValues: {
       title: "",
       description: "",
       flagship_versions: "",
-      add_cta: [{ cta_title: "", cta_url: "" }],
     },
   });
 
   const {
     register,
-    control,
     handleSubmit,
     reset,
     formState: { errors },
   } = methods;
-
-  const { fields, append, remove } = useFieldArray({ name: "add_cta", control });
 
   useEffect(() => {
     if (editData?.data) {
@@ -70,7 +73,6 @@ export default function HeroForm() {
         title: section.heading,
         description: section.paragraph,
         flagship_versions: section.flagshipEventVersionId,
-        add_cta: section.extraOptions.add_cta,
       });
     }
   }, [editData, reset]);
@@ -82,12 +84,11 @@ export default function HeroForm() {
       heading: formData.title,
       paragraph: formData.description,
       flagshipEventVersionId: formData.flagship_versions,
-      extraOptions: { add_cta: formData.add_cta },
     };
 
     try {
       if (isEditMode) {
-        await updateHeroSection(payload , { pathParams: { id: id! } });
+        await updateHeroSection(payload, { pathParams: { id } });
         toast.success("Hero section updated successfully");
       } else {
         await createHeroSection(payload);
@@ -95,127 +96,95 @@ export default function HeroForm() {
       }
       navigate(-1);
     } catch {
-      toast.error(isEditMode ? "Failed to update hero section" : "Failed to create hero section");
+      toast.error(
+        isEditMode
+          ? "Failed to update hero section"
+          : "Failed to create hero section",
+      );
     }
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center space-x-4">
+    <div className="bg-surface border border-border rounded-lg w-full h-full flex flex-col overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="flex justify-between p-6 shrink-0">
+        <div className="flex flex-col items-start gap-1">
+          <h1 className="text-xl font-bold">
+            {isEditMode ? "Edit Content" : "Create New Content"}
+          </h1>
+          <Text size="sm" variant="muted">
+            Add a hero block to your landing page. Pick the flagship version it
+            belongs to and add the calls-to-action.
+          </Text>
+        </div>
         <button
+          type="button"
           onClick={() => navigate(-1)}
-          className="text-gray-400 hover:text-white transition-colors"
+          className="text-muted-foreground hover:text-foreground transition-colors"
         >
           &larr; Back
         </button>
       </div>
 
-      <div>
-        <h2 className="text-2xl font-bold">{isEditMode ? "Edit Hero Section" : "Fill below fields"}</h2>
-        <p className="text-gray-400 mt-1">
-          Provide the details below to {isEditMode ? "update the" : "add new"} hero content. Please ensure all
-          information is accurate before submitting the form.
-        </p>
-      </div>
+      <Divider />
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="col-span-1 md:col-span-2">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-1 flex-col min-h-0"
+        >
+          {/* Scrollable body */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+            {/* Basics */}
+            <div className="space-y-6">
               <FormInput
                 name="title"
                 label="Title"
                 placeholder="Enter hero title"
                 rules={{ required: "Title is required" }}
               />
-            </div>
 
-            <div className="col-span-1 md:col-span-2">
               <Textarea
                 label="Description"
                 placeholder="Enter hero description"
-                {...register("description", { required: "Description is required" })}
+                isRequired
+                {...register("description", {
+                  required: "Description is required",
+                })}
                 error={errors.description?.message}
               />
-            </div>
-          </div>
 
-          <div className="pt-4 border-t border-gray-800">
-            <div className="flex items-center justify-between mb-4">
-              <label className="block text-sm font-medium text-gray-300">
-                Call to Action Buttons (CTA)
-              </label>
-              <button
-                type="button"
-                onClick={() => append({ cta_title: "", cta_url: "" })}
-                className="flex items-center space-x-1 text-sm text-admin-secondary hover:text-white transition-colors"
-              >
-                <Plus size={16} />
-                <span>Add CTA</span>
-              </button>
+              <FormSelect
+                name="flagship_versions"
+                label="Flagship Version"
+                options={versionOptions ?? []}
+                rules={{ required: "Please select a flagship version" }}
+                isLoading={versionsLoading}
+              />
             </div>
 
-            <div className="space-y-4">
-              {fields.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="flex items-start md:items-center gap-4 flex-col md:flex-row bg-[#02111F]/30 p-4 rounded-lg border border-gray-800"
-                >
-                  <div className="flex-1 w-full">
-                    <FormInput
-                      name={`add_cta.${index}.cta_title`}
-                      label="CTA Title"
-                      placeholder="e.g. Learn More"
-                      rules={{ required: "CTA Title is required" }}
-                    />
-                  </div>
-                  <div className="flex-1 w-full">
-                    <FormInput
-                      name={`add_cta.${index}.cta_url`}
-                      label="CTA URL"
-                      placeholder="e.g. /about"
-                      rules={{ required: "CTA URL is required" }}
-                    />
-                  </div>
-                  {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      className="mt-6 p-2.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-md transition-colors self-end"
-                      aria-label="Remove CTA"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div className="col-span-1">
-            <FormSelect
-              name="flagship_versions"
-              label="Flagship Version"
-              options={versionOptions ?? []}
-              rules={{ required: "Please select a flagship version" }}
-              isLoading={versionsLoading}
-            />
-          </div>
-
-          <div className="pt-6 flex items-center justify-end space-x-4">
+          {/* Fixed footer */}
+          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="px-6 py-2 rounded-md border border-gray-800 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors font-medium"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 rounded-md bg-admin-secondary text-white hover:bg-admin-secondary/80 focus:ring-2 focus:ring-offset-2 focus:ring-offset-admin-primary focus:ring-admin-secondary transition-colors font-medium disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Saving..." : isEditMode ? "Update" : "Save Default"}
+              {isSubmitting ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              ) : (
+                <Save size={16} />
+              )}
+              <span>{isEditMode ? "Update Content" : "Create Content"}</span>
             </button>
           </div>
         </form>

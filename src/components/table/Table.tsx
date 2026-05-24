@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-table";
 import { Search, RefreshCw, Inbox } from "lucide-react";
 import { motion } from "framer-motion";
+import Tooltip from "../../shared/design-components/tooltip/Tooltip";
+import ScrollArea from "../../shared/design-components/scroll-area/ScrollArea";
 
 interface TableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -71,22 +73,23 @@ export default function Table<TData, TValue>({
               />
             </div>
             {onRefetch && (
-              <button
-                onClick={() => {
-                  setRefreshSpins((n) => n + 1);
-                  onRefetch();
-                }}
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 rounded-lg transition-all"
-                title="Refresh"
-              >
-                <motion.span
-                  animate={{ rotate: refreshSpins * 360 }}
-                  transition={{ duration: 0.6, ease: "easeInOut" }}
-                  className="inline-flex"
+              <Tooltip content="Refresh">
+                <button
+                  onClick={() => {
+                    setRefreshSpins((n) => n + 1);
+                    onRefetch();
+                  }}
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 rounded-lg transition-all"
                 >
-                  <RefreshCw size={16} />
-                </motion.span>
-              </button>
+                  <motion.span
+                    animate={{ rotate: refreshSpins * 360 }}
+                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                    className="inline-flex"
+                  >
+                    <RefreshCw size={16} />
+                  </motion.span>
+                </button>
+              </Tooltip>
             )}
           </div>
         ) : (
@@ -94,7 +97,10 @@ export default function Table<TData, TValue>({
         )}
         <div className="flex items-center gap-2">{actionRight}</div>
       </div>
-      <div className="w-full overflow-x-auto rounded-lg border border-border bg-surface">
+      <ScrollArea
+        orientation="horizontal"
+        className="w-full rounded-lg border border-border bg-surface"
+      >
         <table className="w-full text-sm text-left align-middle ">
           <thead className="text-foreground bg-surface-2 whitespace-nowrap">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -151,7 +157,7 @@ export default function Table<TData, TValue>({
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollArea>
 
       {/* Pagination UI */}
       {/* <div className="flex items-center justify-between text-sm text-gray-400 mt-4">

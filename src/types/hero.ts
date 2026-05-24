@@ -10,7 +10,4 @@ export interface HeroSection {
   flagshipEventVersion: FlagshipEventVersion;
   heading: string;
   paragraph: string;
-  extraOptions: {
-    add_cta: { cta_title: string; cta_url: string }[];
-  };
 }

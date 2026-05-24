@@ -5,9 +5,6 @@ export interface CreateHeroSectionPayload {
   flagshipEventVersionId: string;
   heading: string;
   paragraph: string;
-  extraOptions: {
-    add_cta: { cta_title: string; cta_url: string }[];
-  };
 }
 
 export default function useCreateHeroSection() {

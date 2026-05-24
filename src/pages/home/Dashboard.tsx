@@ -1,8 +1,3 @@
-export default function Dashboard(prop?: any) {
-  return (
-    <div>
-      Dashboard {prop.value}
-      <div></div>
-    </div>
-  );
+export default function Dashboard() {
+  return <div>Dashboard</div>;
 }

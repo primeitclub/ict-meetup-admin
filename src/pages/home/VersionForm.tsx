@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
-import { Save, Upload, X } from "lucide-react";
+import { Save } from "lucide-react";
+import Divider from "../../shared/design-components/divider/Divider";
+import FormFileUpload from "../../components/form-field/FormFileUpload";
+import { createSlug } from "../../shared/utils/slug";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import { ApiError } from "../../lib/api-client";
 import { useApiQuery } from "../../lib/use-api-query";
@@ -10,10 +13,12 @@ import {
   type FlagshipEventVersion,
 } from "../../types/version";
 import toast from "react-hot-toast";
+import FormCheckbox from "../../components/form-field/FormCheckbox";
 
 import FormDatePicker from "../../components/form-field/date-picker/FormDatePicker";
 import FormInput from "../../components/form-field/input-field/InputController";
 import FormSelect from "../../components/form-field/input-select/SelectController";
+import { Text } from "../../shared/design-components";
 
 interface VersionFormValues {
   version_name: string;
@@ -49,7 +54,7 @@ export default function VersionForm() {
       is_current: false,
     },
   });
-  const { reset } = methods;
+  const { reset, watch, setValue, formState } = methods;
 
   const logoPreview = logoCleared
     ? null
@@ -69,6 +74,19 @@ export default function VersionForm() {
       });
     }
   }, [existingData, reset]);
+
+  // Auto-fill slug from version_name on create — stop as soon as the user
+  // edits the slug field themselves (dirtyFields.slug becomes true).
+  const versionName = watch("version_name");
+  const slugDirty = Boolean(formState.dirtyFields.slug);
+  useEffect(() => {
+    if (isEdit || slugDirty || !versionName) return;
+    setValue("slug", createSlug(versionName), { shouldDirty: false });
+  }, [versionName, isEdit, slugDirty, setValue]);
+
+  // Restrict end_date so it can't fall before the chosen start_date.
+  const startDate = watch("start_date");
+  const endMinDate = startDate ? new Date(startDate) : undefined;
 
   const { execute: createVersion, isLoading: isCreating } = useApiMutation(
     "versions",
@@ -111,17 +129,18 @@ export default function VersionForm() {
     }
   };
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedPreview(reader.result as string);
-        setLogoCleared(false);
-      };
-      reader.readAsDataURL(file);
+  const handleLogoChange = (file: File | null) => {
+    if (file === null) {
+      setUploadedPreview(null);
+      setLogoFile(null);
+      setLogoCleared(true);
+      return;
     }
+    setLogoFile(file);
+    setLogoCleared(false);
+    const reader = new FileReader();
+    reader.onloadend = () => setUploadedPreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   //fetch options from the api and put them into option for react select
@@ -135,22 +154,33 @@ export default function VersionForm() {
   const isLoading = isCreating || isUpdating || isFetching;
 
   return (
-    <div className="w-full h-full space-y-6">
-      <div className="flex items-center space-x-4">
+    <div className="bg-surface border border-border rounded-lg w-full h-full flex flex-col overflow-hidden shadow-sm">
+      <div className="flex justify-between p-6 shrink-0">
+        <div className="flex flex-col items-start gap-1">
+          <h1 className="text-xl font-bold ">
+            {isEdit ? "Edit Version" : "Create New Version"}
+          </h1>
+          <Text size="sm" variant="muted">
+            Spin up a new edition of the conference. You can save as draft and
+            publish later.
+          </Text>
+        </div>
         <button
           onClick={() => navigate(-1)}
-          className="text-gray-400 hover:text-white transition-colors"
+          className="text-muted-foreground hover:text-foreground transition-colors"
         >
           &larr; Back
         </button>
-        <h1 className="text-xl font-bold text-white">
-          {isEdit ? "Edit Version" : "Create New Version"}
-        </h1>
       </div>
 
-      <div className="bg-admin-primary border border-gray-800 rounded-lg p-6 shadow-xl w-full">
-        <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+      <Divider />
+
+      <FormProvider {...methods}>
+        <form
+          onSubmit={methods.handleSubmit(onSubmit)}
+          className="flex flex-1 flex-col min-h-0"
+        >
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormInput
                 name="version_name"
@@ -181,7 +211,11 @@ export default function VersionForm() {
                 options={statusOptions}
                 rules={{ required: "Status is required" }}
               />
+            </div>
 
+            <Divider />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormDatePicker
                 control={methods.control}
                 name="start_date"
@@ -196,90 +230,53 @@ export default function VersionForm() {
                 label="End Date"
                 rules={{ required: "End date is required" }}
                 error={methods.formState.errors.end_date?.message}
+                minDate={endMinDate}
               />
             </div>
 
-            {/* Logo Upload Section */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
-                Event Logo
-              </label>
-              <div className="flex items-center space-x-4">
-                <div className="relative w-24 h-24 bg-[#02111F] border border-gray-800 rounded-lg flex items-center justify-center overflow-hidden">
-                  {logoPreview ? (
-                    <img
-                      src={logoPreview}
-                      alt="Preview"
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <Upload className="text-gray-600" size={24} />
-                  )}
-                  {logoPreview && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUploadedPreview(null);
-                        setLogoFile(null);
-                        setLogoCleared(true);
-                      }}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
-                <label className="cursor-pointer px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors">
-                  Choose Logo
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleLogoChange}
-                  />
-                </label>
-              </div>
-            </div>
+            <Divider />
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="is_current"
-                {...methods.register("is_current")}
-                className="w-4 h-4 rounded border-gray-800 bg-[#02111F] text-admin-secondary focus:ring-admin-secondary"
+            <div className="space-y-6">
+              <FormFileUpload
+                name="logo"
+                label="Event Logo"
+                accept="image/*"
+                preview={logoPreview}
+                onFileChange={handleLogoChange}
+                title="Drop your logo here"
+                hint="SVG, PNG, or JPG · max 2 MB · 512×512 recommended"
               />
-              <label
-                htmlFor="is_current"
-                className="text-sm text-gray-300 cursor-pointer"
-              >
-                Mark as the current version
-              </label>
-            </div>
 
-            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-800">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex items-center space-x-2 px-6 py-2 bg-admin-secondary hover:bg-admin-secondary/80 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <Save size={18} />
-                )}
-                <span>{isEdit ? "Update Version" : "Create Version"}</span>
-              </button>
+              <FormCheckbox
+                name="is_current"
+                label="Mark as the current version"
+              />
             </div>
-          </form>
-        </FormProvider>
-      </div>
+          </div>
+
+          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLoading ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              ) : (
+                <Save size={16} />
+              )}
+              <span>{isEdit ? "Update Version" : "Create Version"}</span>
+            </button>
+          </div>
+        </form>
+      </FormProvider>
     </div>
   );
 }

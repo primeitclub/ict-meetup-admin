@@ -8,9 +8,12 @@ const HomeRouter = () => {
       <Route element={<HomeLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="versions" element={<Versions />} />
-        <Route path="versions/add" element={<VersionForm />} />
-        <Route path="versions/edit/:id" element={<VersionForm />} />
+
+        <Route path="versions">
+          <Route index element={<Versions />} />
+          <Route path="add" element={<VersionForm />} />
+          <Route path="edit/:id" element={<VersionForm />} />
+        </Route>
       </Route>
     </Routes>
   );

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CheckCircle2, FileText, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -6,6 +6,7 @@ import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib/use-api-query";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import Table from "../../components/table/Table";
+import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import type { FlagshipEventVersion } from "../../types/version";
 import { EventVersionStatus } from "../../types/version";
 import toast from "react-hot-toast";
@@ -17,11 +18,12 @@ export default function Versions() {
   }>();
 
   const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { execute: deleteVersion } = useApiMutation("versionDetail")<
-    void,
-    never
-  >({
+  const { execute: deleteVersion, isLoading: isDeleting } = useApiMutation(
+    "versionDetail",
+  )<void, never>({
     method: "DELETE",
     onSuccess: () => {
       refetch();
@@ -30,6 +32,24 @@ export default function Versions() {
       toast.error(error.message || "Failed to delete version");
     },
   });
+
+  // Opens the confirm dialog for a row and remembers which id to delete.
+  const handleDelete = useCallback(
+    (id: string) => {
+      setDeleteId(id);
+      setConfirmOpen(true);
+    },
+    [setDeleteId, setConfirmOpen],
+  );
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteVersion(undefined, { pathParams: { id: deleteId } });
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
 
   const columns = useMemo<ColumnDef<FlagshipEventVersion>[]>(
     () => [
@@ -102,20 +122,12 @@ export default function Versions() {
         cell: (info) => (
           <TableRowActions
             editHref={`edit/${info.row.original.id}`}
-            onDelete={() => {
-              if (
-                window.confirm("Are you sure you want to delete this version?")
-              ) {
-                deleteVersion(undefined, {
-                  pathParams: { id: info.row.original.id },
-                });
-              }
-            }}
+            onDelete={() => handleDelete(info.row.original.id)}
           />
         ),
       },
     ],
-    [deleteVersion],
+    [handleDelete],
   );
 
   return (
@@ -135,6 +147,17 @@ export default function Versions() {
             Add version
           </button>
         }
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete version?"
+        description="This will permanently delete this version. This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

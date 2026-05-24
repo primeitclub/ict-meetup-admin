@@ -8,10 +8,13 @@ interface FormSelectProps {
   placeholder?: string;
   rules?: RegisterOptions;
   isLoading?: boolean;
+  /** Show a required asterisk. Defaults to whether `rules.required` is set. */
+  isRequired?: boolean;
 }
 
-const FormSelect = ({ name, label, options, placeholder, rules, isLoading }: FormSelectProps) => {
+const FormSelect = ({ name, label, options, placeholder, rules, isLoading, isRequired }: FormSelectProps) => {
   const { control, formState: { errors } } = useFormContext();
+  const required = isRequired ?? Boolean(rules?.required);
 
   return (
     <Controller
@@ -21,6 +24,7 @@ const FormSelect = ({ name, label, options, placeholder, rules, isLoading }: For
       render={({ field: { onChange, value } }) => (
         <Select
           label={label}
+          isRequired={required}
           options={options}
           placeholder={placeholder ?? "Select an option"}
           value={options.find((opt) => opt.value === value) ?? null}

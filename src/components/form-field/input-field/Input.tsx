@@ -1,23 +1,27 @@
 import { forwardRef, type InputHTMLAttributes } from "react";
+import FieldLabel from "../FieldLabel";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   label?: string;
+  isRequired?: boolean;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ error, label, className = "", ...props }, ref) => {
+  ({ error, label, isRequired, className = "", ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={props.name} className="text-sm text-gray-400 mb-1 block">{label}</label>
+          <FieldLabel htmlFor={props.name} isRequired={isRequired}>
+            {label}
+          </FieldLabel>
         )}
         <input
           ref={ref}
           id={props.name}
-          className={`w-full bg-[#02111F] border ${
-            error ? "border-red-500" : "border-gray-800"
-          } rounded-lg p-2.5 text-white text-sm focus:border-admin-secondary outline-none transition-colors ${className}`}
+          className={`w-full bg-background border ${
+            error ? "border-red-500" : "border-border"
+          } rounded-lg p-2.5 text-foreground placeholder:text-muted-foreground text-sm focus:border-accent outline-none transition-colors ${className}`}
           {...props}
         />
         {error && <p className="mt-1 text-sm text-red-500">{error}</p>}

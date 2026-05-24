@@ -2,6 +2,7 @@ import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Calendar } from "lucide-react";
 import type { MiddlewareReturn, MiddlewareState } from "@floating-ui/dom";
+import FieldLabel from "../FieldLabel";
 
 interface DatePickerProps {
   label: string;
@@ -9,6 +10,11 @@ interface DatePickerProps {
   onChange: (date: Date | null) => void;
   error?: string;
   placeholderText?: string;
+  isRequired?: boolean;
+  /** Earliest selectable date (passed through to react-datepicker). */
+  minDate?: Date | null;
+  /** Latest selectable date (passed through to react-datepicker). */
+  maxDate?: Date | null;
 }
 
 const DatePicker = ({
@@ -17,20 +23,23 @@ const DatePicker = ({
   onChange,
   error,
   placeholderText = "Select date",
+  isRequired,
+  minDate,
+  maxDate,
 }: DatePickerProps) => {
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-gray-300 mb-1">
-        {label}
-      </label>
-      <div className="relative group">
+      <FieldLabel isRequired={isRequired}>{label}</FieldLabel>
+      <div className="relative group w-full">
         <ReactDatePicker
           selected={selected}
           onChange={onChange}
           placeholderText={placeholderText}
-          className={`w-full bg-[#02111F] border ${
-            error ? "border-red-500" : "border-gray-800"
-          } rounded-lg p-2.5 text-white text-sm focus:border-admin-secondary hover:border-gray-700 outline-none transition-all duration-200 pr-10 cursor-pointer`}
+          minDate={minDate ?? undefined}
+          maxDate={maxDate ?? undefined}
+          className={`w-full bg-background border ${
+            error ? "border-red-500" : "border-border"
+          } rounded-lg p-2.5 text-foreground placeholder:text-muted-foreground text-sm focus:border-accent hover:border-muted-foreground outline-none transition-all duration-200 pr-10 cursor-pointer`}
           dateFormat="yyyy-MM-dd"
           autoComplete="off"
           popperPlacement="bottom-start"
@@ -48,7 +57,7 @@ const DatePicker = ({
             },
           ]}
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-hover:text-admin-secondary transition-colors duration-200 pointer-events-none">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-hover:text-accent transition-colors duration-200 pointer-events-none">
           <Calendar size={18} />
         </div>
       </div>
