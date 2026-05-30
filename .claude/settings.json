@@ -4,7 +4,8 @@
       "Bash(xargs cat)",
       "Bash(node -e ' *)",
       "Bash(npx tsc *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(yarn tsc *)"
     ]
   }
 }

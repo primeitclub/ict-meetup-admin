@@ -5,6 +5,7 @@ import { Save } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../../components/form-field/input-field/InputController";
 import FormSelect from "../../../components/form-field/input-select/SelectController";
+import FormComboBox from "../../../components/form-field/combobox/FormComboBox";
 import Textarea from "../../../components/form-field/Textarea";
 import FormDateRange from "../../../components/form-field/date-picker/FormDateRange";
 import FormTimeRange from "../../../components/form-field/time-picker/FormTimeRange";
@@ -38,8 +39,17 @@ interface EventFormValues {
 }
 
 const feeTypeOptions = [
-  { label: "Free", value: "FREE" },
-  { label: "Paid", value: "PAID" },
+  { label: "Free", value: "free" },
+  { label: "Paid", value: "paid" },
+];
+
+// TODO: replace with categories fetched from the API.
+const categoryOptions = [
+  { label: "Keynote", value: "keynote" },
+  { label: "Workshop", value: "workshop" },
+  { label: "Panel Discussion", value: "panel" },
+  { label: "Networking", value: "networking" },
+  { label: "Lightning Talk", value: "lightning" },
 ];
 
 const statusOptions = [
@@ -96,7 +106,7 @@ export default function EventsForm() {
     formState: { errors },
   } = methods;
 
-  const isPaid = watch("feeType") === "PAID";
+  const isPaid = watch("feeType") === "paid";
 
   const imagePreview = imageCleared
     ? null
@@ -153,10 +163,11 @@ export default function EventsForm() {
   });
 
   const onSubmit = async (data: EventFormValues) => {
-    // Debug: inspect the raw form values (esp. date/time fields) on submit.
-    console.warn("EventsForm submit values:", data);
-
-    return;
+    // Image is required when creating; on edit an existing image may already be set.
+    if (!isEdit && !imageFile) {
+      toast.error("Image is required");
+      return;
+    }
 
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
@@ -235,7 +246,7 @@ export default function EventsForm() {
             <Divider />
 
             {/* Schedule */}
-            <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
               <FormDateRange
                 control={control}
                 startName="registrationDeadline"
@@ -270,10 +281,20 @@ export default function EventsForm() {
                 rules={{ required: "Please select a version" }}
                 isLoading={versionsLoading}
               />
-              <FormInput
+              <FormComboBox
+                control={control}
                 name="categoryId"
-                label="Category ID"
-                placeholder="Category identifier"
+                label="Category"
+                options={categoryOptions}
+                placeholder="Select a category"
+                searchPlaceholder="Search categories…"
+                rules={{ required: "Please select a category" }}
+                error={errors.categoryId?.message}
+                action={{
+                  label: "Add new category",
+                  // TODO: open the create-category modal here.
+                  onSelect: () => toast("Open add-category modal"),
+                }}
               />
               <FormInput
                 name="speakerId"
@@ -291,12 +312,22 @@ export default function EventsForm() {
                 label="Total Seats"
                 type="number"
                 placeholder="100"
+                rules={{
+                  required: "Total seats is required",
+                  min: { value: 1, message: "Must be at least 1" },
+                }}
+                isRequired
               />
               <FormInput
                 name="displayOrder"
                 label="Display Order"
                 type="number"
                 placeholder="1"
+                rules={{
+                  required: "Display order is required",
+                  min: { value: 1, message: "Must be at least 1" },
+                }}
+                isRequired
               />
             </div>
 

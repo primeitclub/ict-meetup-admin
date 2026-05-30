@@ -1,6 +1,6 @@
 import type { FlagshipEventVersion } from "../../../types/version";
 
-export type EventFeeType = "FREE" | "PAID";
+export type EventFeeType = "free" | "paid";
 
 export enum EventStatus {
   DRAFT = "draft",

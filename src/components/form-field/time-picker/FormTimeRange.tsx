@@ -23,11 +23,6 @@ interface FormTimeRangeProps<T extends FieldValues> {
   isRequired?: boolean;
 }
 
-/**
- * RHF-bound time range. Each end is stored as a full ISO date-time string
- * (`Date.toISOString()`), matching FormTimePicker's convention so the API
- * receives `string($date-time)` values.
- */
 export default function FormTimeRange<T extends FieldValues>({
   control,
   startName,
@@ -38,8 +33,12 @@ export default function FormTimeRange<T extends FieldValues>({
   rules,
   error,
   isRequired,
-}: FormTimeRangeProps<T>) {
-  const { field: startField } = useController({ control, name: startName, rules });
+}: Readonly<FormTimeRangeProps<T>>) {
+  const { field: startField } = useController({
+    control,
+    name: startName,
+    rules,
+  });
   const { field: endField } = useController({ control, name: endName });
 
   const required = isRequired ?? Boolean(rules?.required);

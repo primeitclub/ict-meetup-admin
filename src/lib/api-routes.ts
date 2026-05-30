@@ -26,6 +26,8 @@ export const API_ROUTES = {
   eventDetail: "/events/${eventId}",
   eventCategories: "/events/category",
   eventCategoryDetail: "/events/category/${id}",
+  // GET a single category is served from /events/${id}, not the /category path.
+  eventCategoryById: "/events/category/${id}",
 
   // ─── Speakers ─────────────────────────────────────────────────────────────
   speakers: "/speakers",
@@ -67,4 +69,3 @@ export type ApiRoutes = typeof API_ROUTES;
  * All valid route keys — e.g. "events" | "eventDetail" | "speakers" | ...
  */
 export type ApiRouteKey = keyof ApiRoutes;
-

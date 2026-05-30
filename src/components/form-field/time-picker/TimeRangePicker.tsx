@@ -36,12 +36,6 @@ function getDisplayText(
   return fmt(start);
 }
 
-/**
- * Two times — start and end — behind a single trigger, the time-only
- * counterpart to DateRangePicker. One button opens a popover with a start and
- * an end time column; the end is bounded to the chosen start so the range can't
- * invert.
- */
 export default function TimeRangePicker({
   label,
   startTime,
@@ -76,7 +70,9 @@ export default function TimeRangePicker({
             )}
           >
             <span
-              className={displayText ? "text-foreground" : "text-muted-foreground"}
+              className={
+                displayText ? "text-foreground" : "text-muted-foreground"
+              }
             >
               {displayText || placeholder}
             </span>
@@ -97,7 +93,9 @@ export default function TimeRangePicker({
                 </p>
                 <DatePicker
                   selected={startTime ?? null}
-                  onChange={(time: Date | null) => onChange(time, endTime ?? null)}
+                  onChange={(time: Date | null) =>
+                    onChange(time, endTime ?? null)
+                  }
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={timeIntervals}
@@ -112,7 +110,9 @@ export default function TimeRangePicker({
                 </p>
                 <DatePicker
                   selected={endTime ?? null}
-                  onChange={(time: Date | null) => onChange(startTime ?? null, time)}
+                  onChange={(time: Date | null) =>
+                    onChange(startTime ?? null, time)
+                  }
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={timeIntervals}

@@ -13,14 +13,13 @@ import { Text } from "../../../shared/design-components";
 
 interface EventCategoryFormValues {
   name: string;
-  displayName: string;
   displayOrder: string;
 }
 
 type EventCategoryPayload = {
   name: string;
   displayName: string;
-  displayOrder: number;
+  displayOrder?: number;
 };
 
 const LIST_PATH = "/content-management/events/categories";
@@ -31,7 +30,7 @@ export default function EventCategoryForm() {
   const isEdit = !!id;
 
   const { data: existingData, isLoading: isFetching } = useApiQuery(
-    "eventCategoryDetail",
+    "eventCategoryById",
   )<{ data: EventCategory }>({
     pathParams: { id: id as string },
     config: { enabled: isEdit },
@@ -40,7 +39,6 @@ export default function EventCategoryForm() {
   const methods = useForm<EventCategoryFormValues>({
     defaultValues: {
       name: "",
-      displayName: "",
       displayOrder: "",
     },
   });
@@ -51,7 +49,6 @@ export default function EventCategoryForm() {
       const category = existingData.data;
       reset({
         name: category.name,
-        displayName: category.displayName,
         displayOrder: String(category.displayOrder),
       });
     }
@@ -71,7 +68,7 @@ export default function EventCategoryForm() {
   const { execute: updateCategory, isLoading: isUpdating } = useApiMutation(
     "eventCategoryDetail",
   )<EventCategory, EventCategoryPayload>({
-    method: "PUT",
+    method: "PATCH",
     pathParams: { id: id as string },
     onSuccess: () => {
       toast.success("Category updated successfully");
@@ -83,9 +80,13 @@ export default function EventCategoryForm() {
 
   const onSubmit = async (data: EventCategoryFormValues) => {
     const payload: EventCategoryPayload = {
-      name: data.name,
-      displayName: data.displayName,
-      displayOrder: Number(data.displayOrder),
+      name: data.name.trim(),
+      // No separate display-name field — mirror the entered name.
+      displayName: data.name.trim(),
+      // displayOrder is optional in the schema — omit it when left blank.
+      ...(data.displayOrder.trim() === ""
+        ? {}
+        : { displayOrder: Number(data.displayOrder) }),
     };
 
     if (isEdit) {
@@ -121,9 +122,7 @@ export default function EventCategoryForm() {
       <Divider />
 
       <FormProvider {...methods}>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-        >
+        <form onSubmit={handleSubmit(onSubmit)}>
           {/* Scrollable body */}
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -131,14 +130,11 @@ export default function EventCategoryForm() {
                 name="name"
                 label="Name"
                 placeholder="workshops"
-                rules={{ required: "Name is required" }}
-              />
-
-              <FormInput
-                name="displayName"
-                label="Display Name"
-                placeholder="Workshops"
-                rules={{ required: "Display name is required" }}
+                rules={{
+                  required: "Name is required",
+                  maxLength: { value: 100, message: "Max 100 characters" },
+                }}
+                isRequired
               />
 
               <FormInput
@@ -147,7 +143,6 @@ export default function EventCategoryForm() {
                 type="number"
                 placeholder="1"
                 rules={{
-                  required: "Display order is required",
                   min: { value: 1, message: "Must be at least 1" },
                 }}
               />
