@@ -1,5 +1,5 @@
-import { useApiMutation } from "../use-api-mutation";
-import type { HeroSection } from "../../types/hero";
+import { useApiMutation } from "../../../lib/use-api-mutation";
+import type { HeroSection } from "./types";
 
 export interface CreateHeroSectionPayload {
   flagshipEventVersionId: string;

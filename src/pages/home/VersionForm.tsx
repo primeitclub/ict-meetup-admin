@@ -154,7 +154,7 @@ export default function VersionForm() {
   const isLoading = isCreating || isUpdating || isFetching;
 
   return (
-    <div className="bg-surface border border-border rounded-lg w-full h-full flex flex-col overflow-hidden shadow-sm">
+    <div className="bg-surface border border-border rounded-lg w-full shadow-sm">
       <div className="flex justify-between p-6 shrink-0">
         <div className="flex flex-col items-start gap-1">
           <h1 className="text-xl font-bold ">
@@ -178,9 +178,8 @@ export default function VersionForm() {
       <FormProvider {...methods}>
         <form
           onSubmit={methods.handleSubmit(onSubmit)}
-          className="flex flex-1 flex-col min-h-0"
         >
-          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+          <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormInput
                 name="version_name"
@@ -254,7 +253,7 @@ export default function VersionForm() {
             </div>
           </div>
 
-          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
+          <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
             <button
               type="button"
               onClick={() => navigate(-1)}

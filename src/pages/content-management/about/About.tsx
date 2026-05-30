@@ -1,35 +1,34 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
-import Table from "../../components/table/Table";
-import TableRowActions from "../../components/table/TableRowActions";
-import { useApiQuery } from "../../lib";
-import { useApiMutation } from "../../lib/use-api-mutation";
-import type { HeroSection } from "../../types/hero";
+import { Plus, ImageIcon } from "lucide-react";
+import Table from "../../../components/table/Table";
+import TableRowActions from "../../../components/table/TableRowActions";
+import { useApiQuery } from "../../../lib";
+import { useApiMutation } from "../../../lib/use-api-mutation";
+import type { AboutSection } from "./types";
 import toast from "react-hot-toast";
-import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
+import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 
-export default function Hero() {
+export default function About() {
   const navigate = useNavigate();
 
-  const { data, isLoading, refetch } = useApiQuery("heroSections")<{
-    data: { items: HeroSection[] };
+  const { data, isLoading, refetch } = useApiQuery("about")<{
+    data: { items: AboutSection[] };
   }>();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { execute: deleteHeroSection, isLoading: isDeleting } = useApiMutation(
-    "heroSectionDetail",
+  const { execute: deleteAboutSection, isLoading: isDeleting } = useApiMutation(
+    "aboutDetail",
   )<void, never>({
     method: "DELETE",
     onSuccess: () => refetch(),
     onError: (error) =>
-      toast.error(error.message || "Failed to delete hero section"),
+      toast.error(error.message || "Failed to delete about section"),
   });
 
-  // Opens the confirm dialog for a row and remembers which id to delete.
   const handleDelete = useCallback(
     (id: string) => {
       setDeleteId(id);
@@ -41,13 +40,13 @@ export default function Hero() {
   const handleConfirmDelete = async () => {
     if (!deleteId) return;
     try {
-      await deleteHeroSection(undefined, { pathParams: { id: deleteId } });
+      await deleteAboutSection(undefined, { pathParams: { id: deleteId } });
     } finally {
       setConfirmOpen(false);
     }
   };
 
-  const columns: ColumnDef<HeroSection>[] = useMemo(
+  const columns: ColumnDef<AboutSection>[] = useMemo(
     () => [
       {
         id: "sn",
@@ -55,18 +54,40 @@ export default function Hero() {
         cell: ({ row }) => row.index + 1,
       },
       {
-        accessorKey: "heading",
+        id: "image",
+        header: "Image",
+        cell: ({ row }) =>
+          row.original.imageUrl ? (
+            <img
+              src={row.original.imageUrl}
+              alt={row.original.title}
+              className="h-10 w-10 rounded-md object-cover border border-border"
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-surface-2 text-muted-foreground">
+              <ImageIcon size={14} />
+            </div>
+          ),
+      },
+      {
+        accessorKey: "title",
         header: "Title",
       },
       {
-        accessorKey: "paragraph",
-        header: "Description",
+        accessorKey: "content",
+        header: "Content",
+        cell: ({ row }) => (
+          <span className="line-clamp-2 max-w-xs text-muted-foreground">
+            {row.original.content}
+          </span>
+        ),
       },
       {
         header: "Version",
         accessorKey: "flagshipEventVersion.version_number",
         cell: ({ row }) => {
           const version = row.original.flagshipEventVersion;
+          if (!version) return <span className="text-muted-foreground">—</span>;
           return (
             <div>
               {version.version_number}
@@ -117,15 +138,15 @@ export default function Hero() {
       />
       {isLoading && (
         <div className="flex justify-center py-8">
-          <div className="w-8 h-8 border-2 border-gray-800 border-t-admin-secondary rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
         </div>
       )}
 
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Delete hero section?"
-        description="This will permanently delete this hero section. This action cannot be undone."
+        title="Delete about section?"
+        description="This will permanently delete this about section. This action cannot be undone."
         confirmLabel="Delete"
         variant="danger"
         isLoading={isDeleting}

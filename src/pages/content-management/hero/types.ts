@@ -1,4 +1,4 @@
-import type { FlagshipEventVersion } from "./version";
+import type { FlagshipEventVersion } from "../../../types/version";
 
 export interface HeroSection {
   id: string;

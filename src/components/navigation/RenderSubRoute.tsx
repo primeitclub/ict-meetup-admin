@@ -19,7 +19,7 @@ export default function RenderSubRoute({
 }: RenderSubRouteProps) {
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex border-b border-border mb-10 overflow-x-auto overflow-y-hidden">
+      <div className="shrink-0 flex border-b border-border mb-8 overflow-x-auto overflow-y-hidden">
         {routes.map((route) => {
           const Icon = route.icon;
           return (
@@ -55,7 +55,7 @@ export default function RenderSubRoute({
           );
         })}
       </div>
-      <div className="flex-1 px-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4">
         <Outlet />
       </div>
     </div>

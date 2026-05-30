@@ -1,17 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import Divider from "../../shared/design-components/divider/Divider";
-import { Text } from "../../shared/design-components";
+import Divider from "../../../shared/design-components/divider/Divider";
+import { Text } from "../../../shared/design-components";
 
-export default function TeamsForm() {
+export default function FaqsForm() {
   const navigate = useNavigate();
 
   return (
     <div className="bg-surface border border-border rounded-lg w-full shadow-sm">
       <div className="flex justify-between p-6">
         <div className="flex flex-col items-start gap-1">
-          <h1 className="text-xl font-bold">Create New Team Member</h1>
+          <h1 className="text-xl font-bold">Create New FAQ</h1>
           <Text size="sm" variant="muted">
-            Add a new team member profile.
+            Add a frequently asked question entry.
           </Text>
         </div>
         <button

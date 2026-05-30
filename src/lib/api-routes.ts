@@ -24,6 +24,8 @@ export const API_ROUTES = {
   // ─── Events ───────────────────────────────────────────────────────────────
   events: "/events",
   eventDetail: "/events/${eventId}",
+  eventCategories: "/events/category",
+  eventCategoryDetail: "/events/category/${id}",
 
   // ─── Speakers ─────────────────────────────────────────────────────────────
   speakers: "/speakers",
