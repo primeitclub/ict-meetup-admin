@@ -13,6 +13,8 @@ export { default as Faqs } from './content-management/faqs/Faqs';
 
 export { default as Speakers } from './people/Speakers';
 export { default as Teams } from './people/Teams';
+export { default as TeamCategories } from './people/TeamCategories';
+export { default as Designations } from './people/Designations';
 
 export { default as Categories } from './sponsors/Categories';
 export { default as AllSponsors } from './sponsors/AllSponsors';
@@ -37,5 +39,7 @@ export { default as FaqsForm } from './content-management/faqs/FaqsForm';
 
 export { default as SpeakersForm } from './people/SpeakersForm';
 export { default as TeamsForm } from './people/TeamsForm';
+export { default as TeamCategoryForm } from './people/TeamCategoryForm';
+export { default as DesignationForm } from './people/DesignationForm';
 
 export { default as Login } from './auth/Login';

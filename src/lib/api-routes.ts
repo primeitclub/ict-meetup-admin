@@ -36,6 +36,10 @@ export const API_ROUTES = {
   // ─── Teams ────────────────────────────────────────────────────────────────
   teams: "/team-members",
   teamDetail: "/team-members/${teamId}",
+  teamCategories: "/team-members/category",
+  teamCategoryDetail: "/team-members/category/${id}",
+  designations: "/team-members/designation",
+  designationDetail: "/team-members/designation/${id}",
 
   // ─── Sponsors ─────────────────────────────────────────────────────────────
   sponsorCategories: "/sponsors/category",

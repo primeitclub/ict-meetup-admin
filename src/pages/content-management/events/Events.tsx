@@ -24,7 +24,11 @@ export default function Events() {
   }>();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  // Event delete is version-scoped — the backend needs both id and versionId.
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    versionId: string;
+  } | null>(null);
 
   const { execute: deleteEvent, isLoading: isDeleting } = useApiMutation(
     "eventDetail",
@@ -35,17 +39,20 @@ export default function Events() {
   });
 
   const handleDelete = useCallback(
-    (id: string) => {
-      setDeleteId(id);
+    (id: string, versionId: string) => {
+      setDeleteTarget({ id, versionId });
       setConfirmOpen(true);
     },
-    [setDeleteId, setConfirmOpen],
+    [setDeleteTarget, setConfirmOpen],
   );
 
   const handleConfirmDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteTarget) return;
     try {
-      await deleteEvent(undefined, { pathParams: { eventId: deleteId } });
+      await deleteEvent(undefined, {
+        pathParams: { eventId: deleteTarget.id },
+        queryParams: { versionId: deleteTarget.versionId },
+      });
     } finally {
       setConfirmOpen(false);
     }
@@ -128,7 +135,9 @@ export default function Events() {
         cell: ({ row }) => (
           <TableRowActions
             editHref={`edit/${row.original.id}`}
-            onDelete={() => handleDelete(row.original.id)}
+            onDelete={() =>
+              handleDelete(row.original.id, row.original.versionId)
+            }
           />
         ),
       },

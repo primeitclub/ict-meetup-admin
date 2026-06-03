@@ -62,7 +62,13 @@ type UseApiMutationArgs<T, K extends ApiRouteKey> = PathParamsArg<K> & {
 };
 
 interface UseApiMutationResult<T, TPayload> {
-  execute: (payload?: TPayload, options?: { pathParams?: Record<string, string> }) => Promise<T>;
+  execute: (
+    payload?: TPayload,
+    options?: {
+      pathParams?: Record<string, string>;
+      queryParams?: Record<string, unknown>;
+    },
+  ) => Promise<T>;
   data: T | undefined;
   isLoading: boolean;
   isSuccess: boolean;
@@ -117,10 +123,27 @@ export function useApiMutation<K extends ApiRouteKey>(
     );
 
     const execute = useCallback(
-      async (payload?: TPayload, options?: { pathParams?: Record<string, string> }): Promise<T> => {
-        const finalUrl = options?.pathParams
+      async (
+        payload?: TPayload,
+        options?: {
+          pathParams?: Record<string, string>;
+          queryParams?: Record<string, unknown>;
+        },
+      ): Promise<T> => {
+        const basePath = options?.pathParams
           ? interpolatePath(pathTemplate, options.pathParams)
           : url;
+
+        const queryString = options?.queryParams
+          ? "?" +
+            new URLSearchParams(
+              Object.entries(options.queryParams)
+                .filter(([, v]) => v !== undefined && v !== null)
+                .map(([k, v]) => [k, String(v)]),
+            ).toString()
+          : "";
+
+        const finalUrl = `${basePath}${queryString}`;
 
         setIsLoading(true);
         setIsError(false);
