@@ -41,10 +41,12 @@ const ContentManagementRouter = () => {
         <Route path="gallery">
           <Route index element={<Gallery />} />
           <Route path="add" element={<GalleryForm />} />
+          <Route path="edit/:id" element={<GalleryForm />} />
         </Route>
         <Route path="faqs">
           <Route index element={<Faqs />} />
           <Route path="add" element={<FaqsForm />} />
+          <Route path="edit/:versionId" element={<FaqsForm />} />
         </Route>
       </Route>
     </Routes>

@@ -34,7 +34,10 @@ export interface EventItem {
   /** ISO date-time */
   registrationDeadline: string;
   displayOrder: number;
-  image: string | null;
+  /** Storage path sent on create/update. */
+  imagePath: string | null;
+  /** Full, displayable URL returned by the API — use this for previews/tables. */
+  imageUrl: string | null;
 }
 
 export interface EventCategory {

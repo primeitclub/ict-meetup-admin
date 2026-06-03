@@ -62,9 +62,9 @@ export default function Events() {
         id: "image",
         header: "Image",
         cell: ({ row }) =>
-          row.original.image ? (
+          row.original.imageUrl ? (
             <img
-              src={row.original.image}
+              src={row.original.imageUrl}
               alt={row.original.title}
               className="h-10 w-10 rounded-md object-cover border border-border"
             />

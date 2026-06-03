@@ -51,6 +51,7 @@ export const API_ROUTES = {
   gallery: "/gallery",
   galleryDetail: "/gallery/${id}",
   faqs: "/faqs",
+  faqsGrouped: "/faqs/grouped",
   faqDetail: "/faqs/${id}",
 
   // ─── Settings ─────────────────────────────────────────────────────────────

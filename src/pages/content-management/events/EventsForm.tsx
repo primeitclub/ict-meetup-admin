@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import { Save } from "lucide-react";
@@ -14,7 +14,13 @@ import useGetVersionOptions from "../../../lib/hooks/use-get-version-options";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
 import { ApiError } from "../../../lib/api-client";
-import { type EventItem, type EventFeeType, EventStatus } from "./types";
+import {
+  type EventItem,
+  type EventCategory,
+  type EventFeeType,
+  EventStatus,
+} from "./types";
+import type { Speaker } from "../../../types/speaker";
 
 import Divider from "../../../shared/design-components/divider/Divider";
 import { Text } from "../../../shared/design-components";
@@ -43,15 +49,6 @@ const feeTypeOptions = [
   { label: "Paid", value: "paid" },
 ];
 
-// TODO: replace with categories fetched from the API.
-const categoryOptions = [
-  { label: "Keynote", value: "keynote" },
-  { label: "Workshop", value: "workshop" },
-  { label: "Panel Discussion", value: "panel" },
-  { label: "Networking", value: "networking" },
-  { label: "Lightning Talk", value: "lightning" },
-];
-
 const statusOptions = [
   { label: "Archived", value: EventStatus.ARCHIVED },
   { label: "Draft", value: EventStatus.DRAFT },
@@ -69,6 +66,32 @@ export default function EventsForm() {
 
   const { options: versionOptions, isLoading: versionsLoading } =
     useGetVersionOptions();
+
+  const { data: categoriesData, isLoading: categoriesLoading } = useApiQuery(
+    "eventCategories",
+  )<{ data: { items: EventCategory[] } }>();
+
+  const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
+    "speakers",
+  )<{ data: { items: Speaker[] } }>();
+
+  const categoryOptions = useMemo(
+    () =>
+      (categoriesData?.data?.items ?? []).map((category) => ({
+        label: category.displayName || category.name,
+        value: category.id,
+      })),
+    [categoriesData],
+  );
+
+  const speakerOptions = useMemo(
+    () =>
+      (speakersData?.data?.items ?? []).map((speaker) => ({
+        label: speaker.name,
+        value: speaker.id,
+      })),
+    [speakersData],
+  );
 
   const { data: existingData, isLoading: isFetching } = useApiQuery(
     "eventDetail",
@@ -110,7 +133,7 @@ export default function EventsForm() {
 
   const imagePreview = imageCleared
     ? null
-    : (uploadedPreview ?? existingData?.data?.image ?? null);
+    : (uploadedPreview ?? existingData?.data?.imageUrl ?? null);
 
   useEffect(() => {
     if (existingData?.data) {
@@ -286,20 +309,32 @@ export default function EventsForm() {
                 name="categoryId"
                 label="Category"
                 options={categoryOptions}
-                placeholder="Select a category"
+                placeholder={
+                  categoriesLoading ? "Loading categories…" : "Select a category"
+                }
                 searchPlaceholder="Search categories…"
+                emptyText="No categories found"
+                disabled={categoriesLoading}
                 rules={{ required: "Please select a category" }}
                 error={errors.categoryId?.message}
                 action={{
                   label: "Add new category",
-                  // TODO: open the create-category modal here.
-                  onSelect: () => toast("Open add-category modal"),
+                  onSelect: () =>
+                    navigate("/content-management/events/categories/add"),
                 }}
               />
-              <FormInput
+              <FormComboBox
+                control={control}
                 name="speakerId"
-                label="Speaker ID"
-                placeholder="Speaker identifier"
+                label="Speaker"
+                options={speakerOptions}
+                placeholder={
+                  speakersLoading ? "Loading speakers…" : "Select a speaker"
+                }
+                searchPlaceholder="Search speakers…"
+                emptyText="No speakers found"
+                disabled={speakersLoading}
+                error={errors.speakerId?.message}
               />
               <FormInput
                 name="location"

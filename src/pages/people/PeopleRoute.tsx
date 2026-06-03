@@ -9,6 +9,7 @@ const PeopleRouter = () => {
         <Route path="speakers">
           <Route index element={<Speakers />} />
           <Route path="add" element={<SpeakersForm />} />
+          <Route path="edit/:id" element={<SpeakersForm />} />
         </Route>
         <Route path="teams">
           <Route index element={<Teams />} />
