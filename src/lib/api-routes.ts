@@ -52,16 +52,19 @@ export const API_ROUTES = {
   heroSectionDetail: "/hero-sections/${id}",
   about: "/about-sections",
   aboutDetail: "/about-sections/${id}",
+  // One gallery per version. Reads/writes are keyed by version id.
   gallery: "/gallery",
-  galleryDetail: "/gallery/${id}",
+  galleryByVersion: "/gallery/${versionId}",
+  galleryImage: "/gallery/${versionId}/images/${imageId}",
   faqs: "/faqs",
   faqsGrouped: "/faqs/grouped",
   faqDetail: "/faqs/${id}",
 
   // ─── Settings ─────────────────────────────────────────────────────────────
-  socialMedia: "/settings/social-media",
-  contacts: "/settings/contacts",
-  payments: "/settings/payments",
+  // Unified per-version settings record (contact, social links, QR code).
+  settings: "/settings",
+  settingDetail: "/settings/${id}",
+  settingQrCode: "/settings/${id}/qrcode",
 } as const;
 
 /**

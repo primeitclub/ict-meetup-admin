@@ -5,7 +5,7 @@ import { Save } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../../components/form-field/input-field/InputController";
 import FormSelect from "../../../components/form-field/input-select/SelectController";
-import Textarea from "../../../components/form-field/Textarea";
+import FormRichText from "../../../components/form-field/rich-text/RichTextController";
 import FormFileUpload from "../../../components/form-field/FormFileUpload";
 import useGetVersionOptions from "../../../lib/hooks/use-get-version-options";
 import { useApiQuery } from "../../../lib";
@@ -41,8 +41,6 @@ export default function AboutForm() {
     config: { enabled: isEdit },
   });
 
-  console.log({ existingData });
-
   const methods = useForm<AboutFormValues>({
     defaultValues: {
       title: "",
@@ -50,12 +48,7 @@ export default function AboutForm() {
       versionId: "",
     },
   });
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = methods;
+  const { handleSubmit, reset } = methods;
 
   const imagePreview = imageCleared
     ? null
@@ -167,14 +160,12 @@ export default function AboutForm() {
                 rules={{ required: "Title is required" }}
               />
 
-              <Textarea
+              <FormRichText
+                name="content"
                 label="Content"
                 placeholder="Describe the about section content"
                 isRequired
-                {...register("content", {
-                  required: "Content is required",
-                })}
-                error={errors.content?.message}
+                rules={{ required: "Content is required" }}
               />
 
               <FormSelect

@@ -19,6 +19,8 @@ export { default as Designations } from './people/Designations';
 export { default as Categories } from './sponsors/Categories';
 export { default as AllSponsors } from './sponsors/AllSponsors';
 export { default as SponsorsArchive } from './sponsors/SponsorsArchive';
+export { default as CategoryForm } from './sponsors/CategoryForm';
+export { default as SponsorForm } from './sponsors/SponsorForm';
 
 export { default as SocialMediaProfile } from './settings/SocialMediaProfile';
 export { default as ContactManagement } from './settings/ContactManagement';

@@ -8,6 +8,7 @@ import EventsForm from "./events/EventsForm";
 import EventCategories from "./events/EventCategories";
 import Gallery from "./gallery/Gallery";
 import GalleryForm from "./gallery/GalleryForm";
+import GalleryEditor from "./gallery/GalleryEditor";
 import Faqs from "./faqs/Faqs";
 import FaqsForm from "./faqs/FaqsForm";
 import EventCategoryForm from "./events/EventCategoryForm";
@@ -41,7 +42,7 @@ const ContentManagementRouter = () => {
         <Route path="gallery">
           <Route index element={<Gallery />} />
           <Route path="add" element={<GalleryForm />} />
-          <Route path="edit/:id" element={<GalleryForm />} />
+          <Route path="edit/:versionId" element={<GalleryEditor />} />
         </Route>
         <Route path="faqs">
           <Route index element={<Faqs />} />

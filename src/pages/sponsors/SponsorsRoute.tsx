@@ -1,13 +1,28 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Categories, AllSponsors, SponsorsArchive, SponsorsLayout } from "..";
+import {
+  Categories,
+  CategoryForm,
+  AllSponsors,
+  SponsorForm,
+  SponsorsArchive,
+  SponsorsLayout,
+} from "..";
 
 const SponsorsRouter = () => {
   return (
     <Routes>
       <Route element={<SponsorsLayout />}>
         <Route index element={<Navigate to="categories" replace />} />
-        <Route path="categories" element={<Categories />} />
-        <Route path="all-sponsors" element={<AllSponsors />} />
+        <Route path="categories">
+          <Route index element={<Categories />} />
+          <Route path="add" element={<CategoryForm />} />
+          <Route path="edit/:id" element={<CategoryForm />} />
+        </Route>
+        <Route path="all-sponsors">
+          <Route index element={<AllSponsors />} />
+          <Route path="add" element={<SponsorForm />} />
+          <Route path="edit/:id" element={<SponsorForm />} />
+        </Route>
         <Route path="archive" element={<SponsorsArchive />} />
       </Route>
     </Routes>

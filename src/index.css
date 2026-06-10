@@ -98,3 +98,12 @@
 .react-datepicker__input-container input {
   @apply w-full;
 }
+
+/* TipTap rich-text placeholder — shown on the first empty paragraph. */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: rgb(var(--muted-foreground));
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

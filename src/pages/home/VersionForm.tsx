@@ -15,7 +15,7 @@ import {
 import toast from "react-hot-toast";
 import FormCheckbox from "../../components/form-field/FormCheckbox";
 
-import FormDatePicker from "../../components/form-field/date-picker/FormDatePicker";
+import FormDateRange from "../../components/form-field/date-picker/FormDateRange";
 import FormInput from "../../components/form-field/input-field/InputController";
 import FormSelect from "../../components/form-field/input-select/SelectController";
 import { Text } from "../../shared/design-components";
@@ -83,10 +83,6 @@ export default function VersionForm() {
     if (isEdit || slugDirty || !versionName) return;
     setValue("slug", createSlug(versionName), { shouldDirty: false });
   }, [versionName, isEdit, slugDirty, setValue]);
-
-  // Restrict end_date so it can't fall before the chosen start_date.
-  const startDate = watch("start_date");
-  const endMinDate = startDate ? new Date(startDate) : undefined;
 
   const { execute: createVersion, isLoading: isCreating } = useApiMutation(
     "versions",
@@ -215,21 +211,18 @@ export default function VersionForm() {
             <Divider />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormDatePicker
+              <FormDateRange
                 control={methods.control}
-                name="start_date"
-                label="Start Date"
-                rules={{ required: "Start date is required" }}
-                error={methods.formState.errors.start_date?.message}
-              />
-
-              <FormDatePicker
-                control={methods.control}
-                name="end_date"
-                label="End Date"
-                rules={{ required: "End date is required" }}
-                error={methods.formState.errors.end_date?.message}
-                minDate={endMinDate}
+                startName="start_date"
+                endName="end_date"
+                label="Event Date Range"
+                rules={{ required: "Start and end dates are required" }}
+                error={
+                  methods.formState.errors.start_date?.message ||
+                  methods.formState.errors.end_date?.message
+                }
+                isRequired
+                placeholder="Start date → End date"
               />
             </div>
 

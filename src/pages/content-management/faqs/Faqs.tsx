@@ -1,11 +1,14 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
+import toast from "react-hot-toast";
 import Table from "../../../components/table/Table";
 import TableRowActions from "../../../components/table/TableRowActions";
 import { useApiQuery } from "../../../lib";
-import type { GroupedFaqVersion } from "../../../types/faq";
+import { useApiMutation } from "../../../lib/use-api-mutation";
+import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
+import type { FaqSyncPayload, GroupedFaqVersion } from "../../../types/faq";
 
 const statusClasses: Record<string, string> = {
   draft: "bg-amber-500/15 text-amber-600",
@@ -21,6 +24,36 @@ export default function Faqs() {
   const { data, isLoading, refetch } = useApiQuery("faqsGrouped")<{
     data: { items: GroupedFaqVersion[] };
   }>();
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteVersionId, setDeleteVersionId] = useState<string | null>(null);
+
+  // Delete = clear all FAQs for a version via the sync endpoint: PUT an empty
+  // array and `syncByVersion` removes the omitted (i.e. all) FAQs in one go.
+  const { execute: clearVersionFaqs, isLoading: isDeleting } = useApiMutation(
+    "faqs",
+  )<{ data: { items: unknown[] } }, FaqSyncPayload>({
+    method: "PUT",
+    onSuccess: () => refetch(),
+    onError: (error) => toast.error(error.message || "Failed to delete FAQs"),
+  });
+
+  const handleDelete = useCallback(
+    (versionId: string) => {
+      setDeleteVersionId(versionId);
+      setConfirmOpen(true);
+    },
+    [setDeleteVersionId, setConfirmOpen],
+  );
+
+  const handleConfirmDelete = async () => {
+    if (!deleteVersionId) return;
+    try {
+      await clearVersionFaqs({ versionId: deleteVersionId, faqs: [] });
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
 
   const columns: ColumnDef<GroupedFaqVersion>[] = useMemo(
     () => [
@@ -62,11 +95,14 @@ export default function Faqs() {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <TableRowActions editHref={`edit/${row.original.versionId}`} />
+          <TableRowActions
+            editHref={`edit/${row.original.versionId}`}
+            onDelete={() => handleDelete(row.original.versionId)}
+          />
         ),
       },
     ],
-    [],
+    [handleDelete],
   );
 
   const items = data?.data?.items ?? [];
@@ -93,6 +129,17 @@ export default function Faqs() {
           <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete all FAQs for this version?"
+        description="This will permanently delete every FAQ in this version. This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

@@ -1,41 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import { Save } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
 import FormSelect from "../../components/form-field/input-select/SelectController";
+import FormComboBox from "../../components/form-field/combobox/FormComboBox";
 import FormFileUpload from "../../components/form-field/FormFileUpload";
 import useGetVersionOptions from "../../lib/hooks/use-get-version-options";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import { ApiError } from "../../lib/api-client";
-import type { Speaker } from "../../types/speaker";
+import type { Sponsor, SponsorCategory } from "../../types/sponsor";
 import Divider from "../../shared/design-components/divider/Divider";
 import { Text } from "../../shared/design-components";
 
-interface SpeakerFormValues {
+interface SponsorFormValues {
   name: string;
-  designation: string;
-  company: string;
   versionId: string;
+  categoryId: string;
+  link: string;
   displayOrder: string;
-  instagram: string;
-  linkedin: string;
-  portfolio: string;
 }
 
-const LIST_PATH = "/people/speakers";
+const LIST_PATH = "/sponsors/all-sponsors";
 
-// Social links must be absolute https URLs (matches the backend schema).
 const httpsRule = {
-  pattern: {
-    value: /^https:\/\/.+/,
-    message: "Must start with https://",
-  },
+  pattern: { value: /^https?:\/\/.+/, message: "Must be a valid URL" },
+  maxLength: { value: 255, message: "Max 255 characters" },
 };
 
-export default function SpeakersForm() {
+export default function SponsorForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
@@ -44,29 +39,59 @@ export default function SpeakersForm() {
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
   const [imageCleared, setImageCleared] = useState(false);
 
+  // Sponsors have no archive guard, so any version can receive them.
   const { options: versionOptions, isLoading: versionsLoading } =
-    useGetVersionOptions();
+    useGetVersionOptions({ status: null });
+
+  const { data: categoriesData, isLoading: categoriesLoading } = useApiQuery(
+    "sponsorCategories",
+  )<{ data: { items: SponsorCategory[] } }>();
 
   const { data: existingData, isLoading: isFetching } = useApiQuery(
-    "speakerDetail",
-  )<{ data: Speaker }>({
-    pathParams: { speakerId: id as string },
-    config: { enabled: isEdit },
+    "sponsorDetail",
+  )<{ data: Sponsor }>({
+    pathParams: { sponsorId: id as string },
+    enabled: isEdit,
   });
 
-  const methods = useForm<SpeakerFormValues>({
+  const methods = useForm<SponsorFormValues>({
     defaultValues: {
       name: "",
-      designation: "",
-      company: "",
       versionId: "",
+      categoryId: "",
+      link: "",
       displayOrder: "",
-      instagram: "",
-      linkedin: "",
-      portfolio: "",
     },
   });
-  const { handleSubmit, reset } = methods;
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, dirtyFields },
+  } = methods;
+
+  const selectedCategoryId = watch("categoryId");
+
+  const categoryOptions = useMemo(
+    () =>
+      (categoriesData?.data?.items ?? []).map((category) => ({
+        label: category.displayName || category.name,
+        value: category.id,
+      })),
+    [categoriesData],
+  );
+
+  // displayOrder is unique per category (including 0). Look up the sponsors
+  // already in the chosen category so we can suggest the next free order and
+  // dodge the "Display order N is already taken" error.
+  const { data: categorySponsors } = useApiQuery("sponsors")<{
+    data: { items: Sponsor[] };
+  }>({
+    queryParams: { categoryId: selectedCategoryId, limit: 100 },
+    enabled: !isEdit && !!selectedCategoryId,
+  });
 
   const imagePreview = imageCleared
     ? null
@@ -74,77 +99,81 @@ export default function SpeakersForm() {
 
   useEffect(() => {
     if (existingData?.data) {
-      const speaker = existingData.data;
+      const sponsor = existingData.data;
       reset({
-        name: speaker.name ?? "",
-        designation: speaker.designation ?? "",
-        company: speaker.company ?? "",
-        versionId: speaker.versionId ?? "",
-        displayOrder: speaker.displayOrder?.toString() ?? "",
-        instagram: speaker.socialLinks?.instagram ?? "",
-        linkedin: speaker.socialLinks?.linkedin ?? "",
-        portfolio: speaker.socialLinks?.portfolio ?? "",
+        name: sponsor.name ?? "",
+        versionId: sponsor.versionId ?? "",
+        categoryId: sponsor.categoryId ?? "",
+        link: sponsor.link ?? "",
+        displayOrder: sponsor.displayOrder?.toString() ?? "",
       });
     }
   }, [existingData, reset]);
 
-  const { execute: createSpeaker, isLoading: isCreating } = useApiMutation(
-    "speakers",
-  )<Speaker, FormData>({
+  // Auto-fill the next free display order for the picked category (create only,
+  // and only until the user edits the field themselves).
+  useEffect(() => {
+    if (isEdit || dirtyFields.displayOrder || !selectedCategoryId) return;
+    const orders = (categorySponsors?.data?.items ?? []).map(
+      (s) => s.displayOrder,
+    );
+    const next = orders.length ? Math.max(...orders) + 1 : 0;
+    setValue("displayOrder", String(next), { shouldDirty: false });
+  }, [
+    isEdit,
+    selectedCategoryId,
+    categorySponsors,
+    dirtyFields.displayOrder,
+    setValue,
+  ]);
+
+  const { execute: createSponsor, isLoading: isCreating } = useApiMutation(
+    "sponsors",
+  )<Sponsor, FormData>({
     method: "POST",
     onSuccess: () => {
-      toast.success("Speaker created successfully");
+      toast.success("Sponsor created successfully");
       navigate(LIST_PATH);
     },
-    onError: (err) => toast.error(err.message || "Failed to create speaker"),
+    onError: (err) => toast.error(err.message || "Failed to create sponsor"),
   });
 
-  const { execute: updateSpeaker, isLoading: isUpdating } = useApiMutation(
-    "speakerDetail",
-  )<Speaker, FormData>({
-    method: "PATCH",
-    pathParams: { speakerId: id as string },
+  const { execute: updateSponsor, isLoading: isUpdating } = useApiMutation(
+    "sponsorDetail",
+  )<Sponsor, FormData>({
+    method: "PUT",
+    pathParams: { sponsorId: id as string },
     onSuccess: () => {
-      toast.success("Speaker updated successfully");
+      toast.success("Sponsor updated successfully");
       navigate(LIST_PATH);
     },
     onError: (err: ApiError) =>
-      toast.error(err.message || "Failed to update speaker"),
+      toast.error(err.message || "Failed to update sponsor"),
   });
 
-  const onSubmit = async (data: SpeakerFormValues) => {
-    // Image is required on create; on edit the existing image may already be set.
+  const onSubmit = async (data: SponsorFormValues) => {
+    // Image is required on create; on edit the existing logo is kept if omitted.
     if (!isEdit && !imageFile) {
       toast.error("Image is required");
       return;
     }
 
-    const socialLinks: Record<string, string> = {};
-    if (data.instagram.trim()) socialLinks.instagram = data.instagram.trim();
-    if (data.linkedin.trim()) socialLinks.linkedin = data.linkedin.trim();
-    if (data.portfolio.trim()) socialLinks.portfolio = data.portfolio.trim();
-
     const formData = new FormData();
     formData.append("name", data.name.trim());
-    formData.append("designation", data.designation.trim());
-    if (data.company.trim()) formData.append("company", data.company.trim());
     formData.append("versionId", data.versionId);
+    formData.append("categoryId", data.categoryId);
+    if (data.link.trim()) formData.append("link", data.link.trim());
     if (data.displayOrder.trim()) {
       formData.append("displayOrder", data.displayOrder.trim());
-    }
-    // FormData values are strings, so socialLinks goes as a JSON string —
-    // the backend schema JSON.parses it.
-    if (Object.keys(socialLinks).length > 0) {
-      formData.append("socialLinks", JSON.stringify(socialLinks));
     }
     if (imageFile) {
       formData.append("image", imageFile);
     }
 
     if (isEdit) {
-      await updateSpeaker(formData);
+      await updateSponsor(formData);
     } else {
-      await createSpeaker(formData);
+      await createSponsor(formData);
     }
   };
 
@@ -170,10 +199,10 @@ export default function SpeakersForm() {
       <div className="flex justify-between p-6 shrink-0">
         <div className="flex flex-col items-start gap-1">
           <h1 className="text-xl font-bold">
-            {isEdit ? "Edit Speaker" : "Create New Speaker"}
+            {isEdit ? "Edit Sponsor" : "Create New Sponsor"}
           </h1>
           <Text size="sm" variant="muted">
-            Add or update a speaker profile for a flagship version.
+            Add or update a sponsor logo for a flagship version.
           </Text>
         </div>
         <button
@@ -195,21 +224,12 @@ export default function SpeakersForm() {
               <FormInput
                 name="name"
                 label="Name"
-                placeholder="Ada Lovelace"
-                rules={{ required: "Name is required" }}
+                placeholder="Acme Corp"
+                rules={{
+                  required: "Name is required",
+                  maxLength: { value: 150, message: "Max 150 characters" },
+                }}
                 isRequired
-              />
-              <FormInput
-                name="designation"
-                label="Designation"
-                placeholder="Chief Technology Officer"
-                rules={{ required: "Designation is required" }}
-                isRequired
-              />
-              <FormInput
-                name="company"
-                label="Company"
-                placeholder="Tech Corp"
               />
               <FormSelect
                 name="versionId"
@@ -218,50 +238,55 @@ export default function SpeakersForm() {
                 rules={{ required: "Please select a version" }}
                 isLoading={versionsLoading}
               />
+              <FormComboBox
+                control={control}
+                name="categoryId"
+                label="Category"
+                options={categoryOptions}
+                placeholder={
+                  categoriesLoading
+                    ? "Loading categories…"
+                    : "Select a category"
+                }
+                searchPlaceholder="Search categories…"
+                emptyText="No categories found"
+                disabled={categoriesLoading}
+                rules={{ required: "Please select a category" }}
+                error={errors.categoryId?.message}
+                action={{
+                  label: "Add new category",
+                  onSelect: () => navigate("/sponsors/categories/add"),
+                }}
+              />
               <FormInput
                 name="displayOrder"
                 label="Display Order"
                 type="number"
-                placeholder="1"
-                rules={{ min: { value: 1, message: "Must be at least 1" } }}
-              />
-            </div>
-
-            <Divider />
-
-            {/* Social links */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FormInput
-                name="instagram"
-                label="Instagram"
-                placeholder="https://instagram.com/…"
-                rules={httpsRule}
+                placeholder="0"
+                rules={{
+                  min: { value: 0, message: "Must be 0 or more" },
+                  max: { value: 100, message: "Must be 100 or less" },
+                }}
               />
               <FormInput
-                name="linkedin"
-                label="LinkedIn"
-                placeholder="https://linkedin.com/in/…"
-                rules={httpsRule}
-              />
-              <FormInput
-                name="portfolio"
-                label="Portfolio"
-                placeholder="https://…"
+                name="link"
+                label="Link"
+                placeholder="https://acme.com"
                 rules={httpsRule}
               />
             </div>
 
             <Divider />
 
-            {/* Image */}
+            {/* Logo */}
             <FormFileUpload
               name="image"
-              label="Image"
+              label="Logo"
               isRequired
               accept="image/*"
               preview={imagePreview}
               onFileChange={handleImageChange}
-              title="Drop your speaker image here"
+              title="Drop the sponsor logo here"
               hint="SVG, PNG, or JPG · max 2 MB"
             />
           </div>
@@ -285,7 +310,7 @@ export default function SpeakersForm() {
               ) : (
                 <Save size={16} />
               )}
-              <span>{isEdit ? "Update Speaker" : "Create Speaker"}</span>
+              <span>{isEdit ? "Update Sponsor" : "Create Sponsor"}</span>
             </button>
           </div>
         </form>
