@@ -16,7 +16,7 @@ interface UseGetVersionOptionsArgs {
  * Defaults to DRAFT-only versions (the common case for "pick a version" pickers).
  */
 export default function useGetVersionOptions({
-  status = EventVersionStatus.DRAFT,
+  status = null,
 }: UseGetVersionOptionsArgs = {}) {
   const { data, isLoading } = useGetVersions();
 

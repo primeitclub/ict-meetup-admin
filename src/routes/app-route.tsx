@@ -7,6 +7,7 @@ import ContentManagementRouter from "../pages/content-management/ContentMngRoute
 import PeopleRouter from "../pages/people/PeopleRoute";
 import SettingsRouter from "../pages/settings/SettingsRoute";
 import SponsorsRouter from "../pages/sponsors/SponsorsRoute";
+import RegistrationsRouter from "../pages/registrations/RegistrationsRoute";
 
 export default function AppRouter() {
   return (
@@ -40,6 +41,9 @@ export default function AppRouter() {
 
                 {/* Settings */}
                 <Route path="settings/*" element={<SettingsRouter />} />
+
+                {/* Registrations */}
+                <Route path="registrations/*" element={<RegistrationsRouter />} />
               </Route>
             </Routes>
           </ProtectedRoute>

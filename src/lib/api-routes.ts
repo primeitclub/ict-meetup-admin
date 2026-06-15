@@ -60,6 +60,11 @@ export const API_ROUTES = {
   faqsGrouped: "/faqs/grouped",
   faqDetail: "/faqs/${id}",
 
+  // ─── Event Registrations ──────────────────────────────────────────────────
+  eventRegistrations: "/event-registrations",
+  eventRegistrationDetail: "/event-registrations/${registrationId}",
+  eventRegistrationStatus: "/event-registrations/${registrationId}/status",
+
   // ─── Settings ─────────────────────────────────────────────────────────────
   // Unified per-version settings record (contact, social links, QR code).
   settings: "/settings",

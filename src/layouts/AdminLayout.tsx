@@ -5,6 +5,7 @@ import {
   Users,
   Handshake,
   Settings,
+  ClipboardList,
   LogOut,
   ExternalLink,
   type LucideIcon,
@@ -34,6 +35,7 @@ export default function AdminLayout() {
     },
     { label: "People", path: "/people", icon: Users },
     { label: "Sponsors", path: "/sponsors", icon: Handshake },
+    { label: "Registrations", path: "/registrations", icon: ClipboardList },
   ];
 
   const configuration: LinksInterface[] = [
