@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Save, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
+import FormSelect from "../../components/form-field/input-select/SelectController";
 import { useApiMutation } from "../../lib/use-api-mutation";
+import { useApiQuery } from "../../lib";
 import Divider from "../../shared/design-components/divider/Divider";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
 import SettingsVersionBar from "./SettingsVersionBar";
+import type { TeamMember } from "../../types/team";
 
 interface ContactFormValues {
   email: string;
@@ -39,6 +42,22 @@ export default function ContactManagement() {
       teamName: settings?.teamName ?? "",
     });
   }, [settings, reset]);
+
+  const { data: teamsData, isLoading: isLoadingTeams } = useApiQuery("teams")<{
+    data: { items: TeamMember[] };
+  }>({
+    queryParams: { versionId: selectedVersionId ?? "", limit: 100 },
+    enabled: !!selectedVersionId,
+  });
+
+  const teamOptions = useMemo(
+    () =>
+      (teamsData?.data?.items ?? []).map((m) => ({
+        value: m.name,
+        label: m.name,
+      })),
+    [teamsData],
+  );
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -114,13 +133,12 @@ export default function ContactManagement() {
                   maxLength: { value: 20, message: "Max 20 characters" },
                 }}
               />
-              <FormInput
+              <FormSelect
                 name="teamName"
                 label="Team Name"
-                placeholder="ICT Meetup Organizing Team"
-                rules={{
-                  maxLength: { value: 255, message: "Max 255 characters" },
-                }}
+                options={teamOptions}
+                placeholder="Select a team member"
+                isLoading={isLoadingTeams}
               />
             </div>
           </div>
