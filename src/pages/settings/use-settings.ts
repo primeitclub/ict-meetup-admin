@@ -78,6 +78,7 @@ export function useSaveSettings({
     "settings",
   )<{ data: Settings }, FormData>({
     method: "POST",
+    invalidateRoutes: ["settings"],
     onSuccess: () => {
       toast.success("Settings saved");
       onSaved();
@@ -89,6 +90,7 @@ export function useSaveSettings({
     "settingDetail",
   )<{ data: Settings }, FormData>({
     method: "PUT",
+    invalidateRoutes: ["settings"],
     onSuccess: () => {
       toast.success("Settings saved");
       onSaved();

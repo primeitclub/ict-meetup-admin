@@ -39,6 +39,7 @@ export default function PaymentSetup() {
     "settingQrCode",
   )<{ data: unknown }, never>({
     method: "DELETE",
+    invalidateRoutes: ["settings"],
     onSuccess: () => {
       toast.success("QR code removed");
       setQrFile(null);

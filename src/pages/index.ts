@@ -25,6 +25,7 @@ export { default as SponsorForm } from './sponsors/SponsorForm';
 export { default as SocialMediaProfile } from './settings/SocialMediaProfile';
 export { default as ContactManagement } from './settings/ContactManagement';
 export { default as PaymentSetup } from './settings/PaymentSetup';
+export { default as ClubDetails } from './settings/ClubDetails';
 
 export { default as ContentManagementLayout } from './content-management/ContentManagementLayout';
 export { default as PeopleLayout } from './people/PeopleLayout';
