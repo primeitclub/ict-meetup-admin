@@ -161,10 +161,34 @@ export default function EventsForm() {
     }
   }, [existingData, reset]);
 
+  useEffect(() => {
+    if (!isEdit) {
+      reset({
+        title: "",
+        subtitle: "",
+        description: "",
+        startTime: "",
+        endTime: "",
+        date: "",
+        categoryId: "",
+        versionId: "",
+        speakerId: "",
+        totalSeats: "",
+        feeType: "",
+        fee: "",
+        location: "",
+        status: "",
+        registrationDeadline: "",
+        displayOrder: "",
+      });
+    }
+  }, [isEdit, reset]);
+
   const { execute: createEvent, isLoading: isCreating } = useApiMutation(
     "events",
   )<EventItem, FormData>({
     method: "POST",
+    invalidateRoutes: ["events"],
     onSuccess: () => {
       toast.success("Event created successfully");
       navigate("/content-management/events");
@@ -177,6 +201,7 @@ export default function EventsForm() {
   )<EventItem, FormData>({
     method: "PATCH",
     pathParams: { eventId: id as string },
+    invalidateRoutes: ["events"],
     onSuccess: () => {
       toast.success("Event updated successfully");
       navigate("/content-management/events");

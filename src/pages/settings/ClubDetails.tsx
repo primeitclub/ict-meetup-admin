@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import Divider from "../../shared/design-components/divider/Divider";
+
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
 import SettingsVersionBar from "./SettingsVersionBar";
@@ -31,12 +32,14 @@ export default function ClubDetails() {
   });
   const { handleSubmit, reset } = methods;
 
+  // Keep the form empty when switching versions — saved data lives in "Current values".
   useEffect(() => {
-    reset({
-      clubEmail: settings?.clubEmail ?? "",
-      clubPhoneNumber: settings?.clubPhoneNumber ?? "",
-    });
-  }, [settings, reset]);
+    reset();
+  }, [selectedVersionId, reset]);
+
+
+
+
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -62,7 +65,14 @@ export default function ClubDetails() {
       fd.append("clubEmail", data.clubEmail.trim());
       fd.append("clubPhoneNumber", data.clubPhoneNumber.trim());
     });
+
+    // Clear the form inputs immediately after submit.
+    reset({
+      clubEmail: "",
+      clubPhoneNumber: "",
+    });
   };
+
 
   const handleConfirmDelete = async () => {
     if (!settings?.id) return;
@@ -115,7 +125,32 @@ export default function ClubDetails() {
             </div>
           </div>
 
+          {/* Current values (saved) */}
+          <div className="mt-6">
+            <Divider />
+            <div className="pt-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Current values for this version
+              </p>
+
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground">Club Email</p>
+                  <p>{settings?.clubEmail ?? "—"}</p>
+
+                </div>
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground">Club Phone Number</p>
+                  <p>{settings?.clubPhoneNumber ?? "—"}</p>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-border bg-surface px-6 py-4">
+
             <div>
               {exists && isDraft && (
                 <button
@@ -143,6 +178,7 @@ export default function ClubDetails() {
           </div>
         </form>
       </FormProvider>
+
 
       <ConfirmDialog
         open={confirmOpen}

@@ -37,14 +37,13 @@ export default function SocialMediaProfile() {
   const { control, handleSubmit, reset } = methods;
   const { fields, append, remove } = useFieldArray({ control, name: "links" });
 
+  // Keep the form empty when switching versions — saved data lives in "Current values".
   useEffect(() => {
-    reset({
-      links: (settings?.socialMediaLinks ?? []).map((l) => ({
-        platform: l.platform,
-        link: l.link,
-      })),
-    });
-  }, [settings, reset]);
+    reset({ links: [] });
+  }, [selectedVersionId, reset]);
+
+
+
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -56,11 +55,16 @@ export default function SocialMediaProfile() {
     const links = data.links
       .filter((l) => l.platform && l.link.trim())
       .map((l) => ({ platform: l.platform, link: l.link.trim() }));
+
     await save(selectedVersionId, (fd) => {
       // Multipart → send the array as a JSON string; the server parses it.
       fd.append("socialMediaLinks", JSON.stringify(links));
     });
+
+    // Clear the form inputs immediately after submit.
+    reset({ links: [] });
   };
+
 
   return (
     <div className="bg-surface border border-border rounded-lg w-full shadow-sm">
@@ -124,6 +128,29 @@ export default function SocialMediaProfile() {
             </button>
           </div>
 
+          {/* Current values (saved) */}
+          <div className="mt-6">
+            <Divider />
+            <div className="pt-4 space-y-3">
+              <Text size="sm" variant="muted">Current values for this version</Text>
+
+              {(settings?.socialMediaLinks?.length ?? 0) === 0 ? (
+                <Text size="sm" variant="muted">No social links saved yet.</Text>
+              ) : (
+                <div className="space-y-3">
+                  {settings?.socialMediaLinks?.map((l, idx) => (
+                    <div key={`${l.platform}-${idx}`} className="rounded-lg border border-border p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <Text size="sm" className="font-medium">{l.platform}</Text>
+                        <Text size="xs" variant="muted">{l.link}</Text>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
             <button
               type="submit"
@@ -140,6 +167,7 @@ export default function SocialMediaProfile() {
           </div>
         </form>
       </FormProvider>
+
     </div>
   );
 }

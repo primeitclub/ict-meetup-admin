@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Save, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import FormFileUpload from "../../components/form-field/FormFileUpload";
@@ -22,8 +22,14 @@ export default function PaymentSetup() {
   const [qrFile, setQrFile] = useState<File | null>(null);
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
 
-  // New pick wins; otherwise show the saved QR code.
-  const preview = uploadedPreview ?? settings?.qrCodeUrl ?? null;
+  // Upload area shows only a newly picked file — saved QR is shown in "Current values".
+  const preview = uploadedPreview;
+
+  // Keep the upload area empty when switching versions.
+  useEffect(() => {
+    setQrFile(null);
+    setUploadedPreview(null);
+  }, [selectedVersionId]);
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -64,6 +70,9 @@ export default function PaymentSetup() {
   const handleSave = async () => {
     if (!qrFile) return;
     await save(selectedVersionId, (fd) => fd.append("qrCode", qrFile));
+    // Clear the upload inputs immediately after submit.
+    setQrFile(null);
+    setUploadedPreview(null);
   };
 
   const handleRemove = async () => {
@@ -114,9 +123,26 @@ export default function PaymentSetup() {
             Select a version to manage its QR code.
           </Text>
         )}
+
+        {/* Current values (saved) */}
+        <div className="pt-2">
+          <Divider />
+          <div className="pt-4 space-y-2">
+            <Text size="sm" variant="muted">Current values for this version</Text>
+            {settings?.qrCodeUrl ? (
+              <div className="rounded-lg border border-border p-4 space-y-2">
+                <Text size="xs" variant="muted">Stored QR Code URL</Text>
+                <Text>{settings.qrCodeUrl}</Text>
+              </div>
+            ) : (
+              <Text size="sm" variant="muted">No QR code saved yet.</Text>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
+
         <button
           type="button"
           onClick={handleSave}

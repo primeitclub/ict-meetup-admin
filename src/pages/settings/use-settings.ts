@@ -8,7 +8,7 @@ import type { Settings } from "../../types/settings";
 
 /**
  * Resolves the version picker + the settings record for the selected version.
- * Shared by all three settings tabs — they each edit a slice of the same record.
+ * Shared by all settings tabs — they each edit a slice of the same record.
  */
 export function useSettingsForVersion() {
   const { data: versionsData } = useGetVersions();

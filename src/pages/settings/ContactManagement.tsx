@@ -58,14 +58,20 @@ export default function ContactManagement() {
     remove: removeDept,
   } = useFieldArray({ control, name: "contactDepartments" });
 
+  // Keep the form empty when switching versions — saved data lives in "Current values".
   useEffect(() => {
     reset({
-      email: settings?.email ?? "",
-      phoneNumber: settings?.phoneNumber ?? "",
-      teamName: settings?.teamName ?? "",
-      contactDepartments: settings?.contactDepartments ?? [],
+      email: "",
+      phoneNumber: "",
+      teamName: "",
+      contactDepartments: [],
     });
-  }, [settings, reset]);
+  }, [selectedVersionId, reset]);
+
+
+
+
+
 
   const { data: teamsData, isLoading: isLoadingTeams } = useApiQuery("teams")<{
     data: { items: TeamMember[] };
@@ -109,7 +115,16 @@ export default function ContactManagement() {
       fd.append("teamName", data.teamName.trim());
       fd.append("contactDepartments", JSON.stringify(data.contactDepartments));
     });
+
+    // Clear the form inputs immediately after submit.
+    reset({
+      email: "",
+      phoneNumber: "",
+      teamName: "",
+      contactDepartments: [],
+    });
   };
+
 
   const handleConfirmDelete = async () => {
     if (!settings?.id) return;
@@ -201,6 +216,56 @@ export default function ContactManagement() {
             </div>
           </div>
 
+          {/* Current values (saved) */}
+          <div className="mt-6">
+            <Divider />
+            <div className="pt-4 space-y-4">
+              <Text size="sm" variant="muted">Current values for this version</Text>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                  <Text size="xs" variant="muted">Email</Text>
+                  <Text>{settings?.email ?? "—"}</Text>
+                </div>
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                  <Text size="xs" variant="muted">Phone Number</Text>
+                  <Text>{settings?.phoneNumber ?? "—"}</Text>
+                </div>
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                  <Text size="xs" variant="muted">Team Name</Text>
+                  <Text>{settings?.teamName ?? "—"}</Text>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {(settings?.contactDepartments?.length ?? 0) === 0 ? (
+                  <Text size="sm" variant="muted">No departments saved yet.</Text>
+                ) : (
+                  settings?.contactDepartments?.map((d, deptIdx) => (
+                    <div key={`${d.department}-${deptIdx}`} className="rounded-lg border border-border p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <Text size="sm" className="font-medium">{d.department}</Text>
+                        <Text size="xs" variant="muted">{(d.contacts?.length ?? 0)} contacts</Text>
+                      </div>
+                      {(d.contacts?.length ?? 0) === 0 ? (
+                        <Text size="sm" variant="muted">No contacts</Text>
+                      ) : (
+                        <div className="space-y-2">
+                          {d.contacts.map((c, cIdx) => (
+                            <div key={`${c.name}-${cIdx}`} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+                              <Text size="sm">{c.name}</Text>
+                              <Text size="xs" variant="muted">{c.phone}</Text>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-border bg-surface px-6 py-4">
             <div>
               {exists && isDraft && (
@@ -229,6 +294,7 @@ export default function ContactManagement() {
           </div>
         </form>
       </FormProvider>
+
 
       <ConfirmDialog
         open={confirmOpen}
