@@ -91,6 +91,11 @@ export default function AboutForm() {
   });
 
   const onSubmit = async (data: AboutFormValues) => {
+    if (!isEdit && !imageFile) {
+      toast.error("Image is required");
+      return;
+    }
+
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       formData.append(key, String(value));
@@ -183,6 +188,7 @@ export default function AboutForm() {
             <FormFileUpload
               name="image"
               label="Image"
+              isRequired={!isEdit}
               accept="image/*"
               preview={imagePreview}
               onFileChange={handleImageChange}
