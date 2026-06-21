@@ -165,6 +165,7 @@ export default function EventsForm() {
     "events",
   )<EventItem, FormData>({
     method: "POST",
+    invalidateRoutes: ["events"],
     onSuccess: () => {
       toast.success("Event created successfully");
       navigate("/content-management/events");
@@ -177,6 +178,7 @@ export default function EventsForm() {
   )<EventItem, FormData>({
     method: "PATCH",
     pathParams: { eventId: id as string },
+    invalidateRoutes: ["events", "eventDetail"],
     onSuccess: () => {
       toast.success("Event updated successfully");
       navigate("/content-management/events");
@@ -350,6 +352,7 @@ export default function EventsForm() {
                 rules={{
                   required: "Total seats is required",
                   min: { value: 1, message: "Must be at least 1" },
+                  max: { value: 100, message: "Total seats must not exceed 100" },
                 }}
                 isRequired
               />
@@ -400,6 +403,7 @@ export default function EventsForm() {
             <FormFileUpload
               name="image"
               label="Image"
+              isRequired={!isEdit}
               accept="image/*"
               preview={imagePreview}
               onFileChange={handleImageChange}

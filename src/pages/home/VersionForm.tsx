@@ -109,6 +109,11 @@ export default function VersionForm() {
   });
 
   const onSubmit = async (data: VersionFormValues) => {
+    if (!isEdit && !logoFile) {
+      toast.error("Logo is required");
+      return;
+    }
+
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       formData.append(key, String(value));
@@ -232,6 +237,7 @@ export default function VersionForm() {
               <FormFileUpload
                 name="logo"
                 label="Event Logo"
+                isRequired={!isEdit}
                 accept="image/*"
                 preview={logoPreview}
                 onFileChange={handleLogoChange}
