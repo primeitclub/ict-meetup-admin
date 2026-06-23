@@ -12,7 +12,7 @@ import GalleryEditor from "./gallery/GalleryEditor";
 import Faqs from "./faqs/Faqs";
 import FaqsForm from "./faqs/FaqsForm";
 import EventCategoryForm from "./events/EventCategoryForm";
-import { ContentEvents } from "..";
+import ContentEvents from "./events/Events";
 
 const ContentManagementRouter = () => {
   return (

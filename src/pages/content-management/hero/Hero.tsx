@@ -67,6 +67,7 @@ export default function Hero() {
         accessorKey: "flagshipEventVersion.version_number",
         cell: ({ row }) => {
           const version = row.original.flagshipEventVersion;
+          if (!version) return <span className="text-muted-foreground">—</span>;
           return (
             <div>
               {version.version_number}
