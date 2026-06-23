@@ -145,8 +145,12 @@ export default function Registrations() {
       {
         accessorKey: "createdAt",
         header: "Registered",
-        cell: ({ row }) =>
-          new Date(row.original.createdAt).toLocaleDateString(),
+        cell: ({ row }) => {
+          const raw = row.original.createdAt;
+          if (!raw) return "—";
+          const d = new Date(raw);
+          return isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+        },
       },
       {
         id: "actions",

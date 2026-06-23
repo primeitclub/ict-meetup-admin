@@ -11,6 +11,11 @@ import { Text } from "../../shared/design-components";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
 import SettingsVersionBar from "./SettingsVersionBar";
+import Table from "../../components/table/Table";
+import TableRowActions from "../../components/table/TableRowActions";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Settings } from "../../types/settings";
+import { ArrowLeft } from "lucide-react";
 
 interface ContactPerson {
   name: string;
@@ -52,21 +57,97 @@ export default function ContactManagement() {
   });
   const { control, handleSubmit, reset } = methods;
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const { data: allSettingsData, isLoading: isLoadingAll, refetch: refetchAll } = useApiQuery("settings")<{
+    data: { items: Settings[] };
+  }>({
+    enabled: !isFormOpen,
+  });
+
+  const tableData = allSettingsData?.data?.items ?? [];
+
+  const columns: ColumnDef<Settings>[] = useMemo(
+    () => [
+      {
+        id: "sn",
+        header: "S.N",
+        cell: ({ row }) => row.index + 1,
+      },
+      {
+        header: "Version",
+        accessorKey: "flagshipEventVersion.version_number",
+        cell: ({ row }) => {
+          const version = row.original.flagshipEventVersion;
+          if (!version) return <span className="text-muted-foreground">—</span>;
+          return (
+            <div>
+              {version.version_number}
+              {version.is_current && (
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "email",
+        header: "Email",
+        cell: ({ row }) => row.original.email || "—",
+      },
+      {
+        accessorKey: "phoneNumber",
+        header: "Phone",
+        cell: ({ row }) => row.original.phoneNumber || "—",
+      },
+      {
+        header: "Departments",
+        cell: ({ row }) => {
+          const depts = row.original.contactDepartments;
+          if (!depts || depts.length === 0) return "—";
+          return `${depts.length} dept${depts.length > 1 ? "s" : ""}`;
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <TableRowActions
+            onEdit={() => {
+              setVersion(row.original.versionId);
+              setIsFormOpen(true);
+            }}
+          />
+        ),
+      },
+    ],
+    [setVersion]
+  );
+
   const {
     fields: deptFields,
     append: appendDept,
     remove: removeDept,
   } = useFieldArray({ control, name: "contactDepartments" });
 
-  // Keep the form empty when switching versions — saved data lives in "Current values".
+  // Populate the form with existing settings so the user can update them.
   useEffect(() => {
-    reset({
-      email: "",
-      phoneNumber: "",
-      teamName: "",
-      contactDepartments: [],
-    });
-  }, [selectedVersionId, reset]);
+    if (settings) {
+      reset({
+        email: settings.email || "",
+        phoneNumber: settings.phoneNumber || "",
+        teamName: settings.teamName || "",
+        contactDepartments: settings.contactDepartments || [],
+      });
+    } else {
+      reset({
+        email: "",
+        phoneNumber: "",
+        teamName: "",
+        contactDepartments: [],
+      });
+    }
+  }, [settings, reset, selectedVersionId]);
 
 
 
@@ -135,8 +216,47 @@ export default function ContactManagement() {
     }
   };
 
+  if (!isFormOpen) {
+    return (
+      <div className="space-y-6">
+        <Table
+          columns={columns}
+          data={tableData}
+          onRefetch={refetchAll}
+          searchPlaceholder="Search contact management..."
+          actionRight={
+            <button
+              onClick={() => {
+                setVersion(versionOptions[0]?.value);
+                setIsFormOpen(true);
+              }}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Plus size={16} />
+              Add settings
+            </button>
+          }
+        />
+        {isLoadingAll && (
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-surface border border-border rounded-lg w-full shadow-sm">
+      <div className="p-4 border-b border-border flex items-center gap-4">
+        <button
+          onClick={() => setIsFormOpen(false)}
+          className="p-2 hover:bg-surface-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-medium">Add/Edit Contact Management</h2>
+      </div>
       <div className="p-6">
         <SettingsVersionBar
           title="Contact Management"

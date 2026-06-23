@@ -202,7 +202,6 @@ export default function EventsForm() {
     method: "PATCH",
     pathParams: { eventId: id as string },
     invalidateRoutes: ["events", "eventDetail"],
-    invalidateRoutes: ["events"],
     onSuccess: () => {
       toast.success("Event updated successfully");
       navigate("/content-management/events");

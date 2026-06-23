@@ -4,19 +4,29 @@ import Tooltip from "../../shared/design-components/tooltip/Tooltip";
 
 interface TableRowActionsProps {
   editHref?: string;
+  onEdit?: () => void;
   onDelete?: () => void;
 }
 
-const TableRowActions = ({ editHref, onDelete }: TableRowActionsProps) => (
+const TableRowActions = ({ editHref, onEdit, onDelete }: TableRowActionsProps) => (
   <div className="flex items-center space-x-2">
-    {editHref && (
+    {(editHref || onEdit) && (
       <Tooltip content="Edit">
-        <Link
-          to={editHref}
-          className="p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 rounded-lg transition-all"
-        >
-          <Edit2 size={16} />
-        </Link>
+        {editHref ? (
+          <Link
+            to={editHref}
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 rounded-lg transition-all"
+          >
+            <Edit2 size={16} />
+          </Link>
+        ) : (
+          <button
+            onClick={onEdit}
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-foreground/10 rounded-lg transition-all"
+          >
+            <Edit2 size={16} />
+          </button>
+        )}
       </Tooltip>
     )}
     {onDelete && (

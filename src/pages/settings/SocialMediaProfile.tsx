@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { Plus, Save, Trash2 } from "lucide-react";
 import FormInput from "../../components/form-field/input-field/InputController";
@@ -7,7 +7,12 @@ import Divider from "../../shared/design-components/divider/Divider";
 import { Text } from "../../shared/design-components";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
 import SettingsVersionBar from "./SettingsVersionBar";
-import { SOCIAL_PLATFORMS, type SocialPlatform } from "../../types/settings";
+import { SOCIAL_PLATFORMS, type SocialPlatform, type Settings } from "../../types/settings";
+import { useApiQuery } from "../../lib";
+import Table from "../../components/table/Table";
+import TableRowActions from "../../components/table/TableRowActions";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ArrowLeft } from "lucide-react";
 
 interface SocialFormValues {
   links: { platform: SocialPlatform | ""; link: string }[];
@@ -37,10 +42,73 @@ export default function SocialMediaProfile() {
   const { control, handleSubmit, reset } = methods;
   const { fields, append, remove } = useFieldArray({ control, name: "links" });
 
-  // Keep the form empty when switching versions — saved data lives in "Current values".
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const { data: allSettingsData, isLoading: isLoadingAll, refetch: refetchAll } = useApiQuery("settings")<{
+    data: { items: Settings[] };
+  }>({
+    enabled: !isFormOpen,
+  });
+
+  const tableData = allSettingsData?.data?.items ?? [];
+
+  const columns: ColumnDef<Settings>[] = useMemo(
+    () => [
+      {
+        id: "sn",
+        header: "S.N",
+        cell: ({ row }) => row.index + 1,
+      },
+      {
+        header: "Version",
+        accessorKey: "flagshipEventVersion.version_number",
+        cell: ({ row }) => {
+          const version = row.original.flagshipEventVersion;
+          if (!version) return <span className="text-muted-foreground">—</span>;
+          return (
+            <div>
+              {version.version_number}
+              {version.is_current && (
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        header: "Social Profiles",
+        cell: ({ row }) => {
+          const links = row.original.socialMediaLinks;
+          if (!links || links.length === 0) return "—";
+          return links.map(l => l.platform).join(", ");
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <TableRowActions
+            onEdit={() => {
+              setVersion(row.original.versionId);
+              setIsFormOpen(true);
+            }}
+          />
+        ),
+      },
+    ],
+    [setVersion]
+  );
+
+  // Populate the form with existing settings so the user can update them.
   useEffect(() => {
-    reset({ links: [] });
-  }, [selectedVersionId, reset]);
+    if (settings) {
+      reset({
+        links: settings.socialMediaLinks || [],
+      });
+    } else {
+      reset({ links: [] });
+    }
+  }, [settings, reset, selectedVersionId]);
 
 
 
@@ -66,8 +134,47 @@ export default function SocialMediaProfile() {
   };
 
 
+  if (!isFormOpen) {
+    return (
+      <div className="space-y-6">
+        <Table
+          columns={columns}
+          data={tableData}
+          onRefetch={refetchAll}
+          searchPlaceholder="Search social media..."
+          actionRight={
+            <button
+              onClick={() => {
+                setVersion(versionOptions[0]?.value);
+                setIsFormOpen(true);
+              }}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Plus size={16} />
+              Add settings
+            </button>
+          }
+        />
+        {isLoadingAll && (
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-surface border border-border rounded-lg w-full shadow-sm">
+      <div className="p-4 border-b border-border flex items-center gap-4">
+        <button
+          onClick={() => setIsFormOpen(false)}
+          className="p-2 hover:bg-surface-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-medium">Add/Edit Social Media Profile</h2>
+      </div>
       <div className="p-6">
         <SettingsVersionBar
           title="Social Media Profile"
