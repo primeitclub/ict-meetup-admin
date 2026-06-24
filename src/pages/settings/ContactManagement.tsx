@@ -3,7 +3,7 @@ import { FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "
 import { Plus, Save, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
-import FormSelect from "../../components/form-field/input-select/SelectController";
+// import FormSelect from "../../components/form-field/input-select/SelectController";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import { useApiQuery } from "../../lib";
 import Divider from "../../shared/design-components/divider/Divider";
@@ -145,26 +145,12 @@ export default function ContactManagement() {
     }
   }, [settings, reset, selectedVersionId]);
 
-
-
-
-
-
-  const { data: teamsData, isLoading: isLoadingTeams } = useApiQuery("teams")<{
+  const { data: teamsData } = useApiQuery("teams")<{
     data: { items: TeamMember[] };
   }>({
     queryParams: { versionId: selectedVersionId ?? "", limit: 100 },
     enabled: !!selectedVersionId,
   });
-
-  const teamOptions = useMemo(
-    () =>
-      (teamsData?.data?.items ?? []).map((m) => ({
-        value: m.name,
-        label: m.name,
-      })),
-    [teamsData],
-  );
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -173,9 +159,7 @@ export default function ContactManagement() {
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const { execute: deleteSettings, isLoading: isDeleting } = useApiMutation(
-    "settingDetail",
-  )<void, never>({
+  const { execute: deleteSettings, isLoading: isDeleting } = useApiMutation("settingDetail")<void, never>({
     method: "DELETE",
     invalidateRoutes: ["settings"],
     onSuccess: () => {
@@ -199,7 +183,6 @@ export default function ContactManagement() {
       contactDepartments: [],
     });
   };
-
 
   const handleConfirmDelete = async () => {
     if (!settings?.id) return;
@@ -313,9 +296,7 @@ export default function ContactManagement() {
 
               <button
                 type="button"
-                onClick={() =>
-                  appendDept({ department: "", contacts: [] })
-                }
+                onClick={() => appendDept({ department: "", contacts: [] })}
                 className="inline-flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:border-accent hover:text-foreground transition-colors"
               >
                 <Plus size={16} />
@@ -328,15 +309,21 @@ export default function ContactManagement() {
           <div className="mt-6">
             <Divider />
             <div className="pt-4 space-y-4">
-              <Text size="sm" variant="muted">Current values for this version</Text>
+              <Text size="sm" variant="muted">
+                Current values for this version
+              </Text>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="rounded-lg border border-border p-4 space-y-1">
-                  <Text size="xs" variant="muted">Email</Text>
+                  <Text size="xs" variant="muted">
+                    Email
+                  </Text>
                   <Text>{settings?.email ?? "—"}</Text>
                 </div>
                 <div className="rounded-lg border border-border p-4 space-y-1">
-                  <Text size="xs" variant="muted">Phone Number</Text>
+                  <Text size="xs" variant="muted">
+                    Phone Number
+                  </Text>
                   <Text>{settings?.phoneNumber ?? "—"}</Text>
                 </div>
                 {/* <div className="rounded-lg border border-border p-4 space-y-1">
@@ -347,22 +334,38 @@ export default function ContactManagement() {
 
               <div className="space-y-3">
                 {(settings?.contactDepartments?.length ?? 0) === 0 ? (
-                  <Text size="sm" variant="muted">No departments saved yet.</Text>
+                  <Text size="sm" variant="muted">
+                    No departments saved yet.
+                  </Text>
                 ) : (
                   settings?.contactDepartments?.map((d, deptIdx) => (
-                    <div key={`${d.department}-${deptIdx}`} className="rounded-lg border border-border p-4 space-y-3">
+                    <div
+                      key={`${d.department}-${deptIdx}`}
+                      className="rounded-lg border border-border p-4 space-y-3"
+                    >
                       <div className="flex items-center justify-between gap-4">
-                        <Text size="sm" className="font-medium">{d.department}</Text>
-                        <Text size="xs" variant="muted">{(d.contacts?.length ?? 0)} contacts</Text>
+                        <Text size="sm" className="font-medium">
+                          {d.department}
+                        </Text>
+                        <Text size="xs" variant="muted">
+                          {d.contacts?.length ?? 0} contacts
+                        </Text>
                       </div>
                       {(d.contacts?.length ?? 0) === 0 ? (
-                        <Text size="sm" variant="muted">No contacts</Text>
+                        <Text size="sm" variant="muted">
+                          No contacts
+                        </Text>
                       ) : (
                         <div className="space-y-2">
                           {d.contacts.map((c, cIdx) => (
-                            <div key={`${c.name}-${cIdx}`} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+                            <div
+                              key={`${c.name}-${cIdx}`}
+                              className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3"
+                            >
                               <Text size="sm">{c.name}</Text>
-                              <Text size="xs" variant="muted">{c.phone}</Text>
+                              <Text size="xs" variant="muted">
+                                {c.phone}
+                              </Text>
                             </div>
                           ))}
                         </div>
@@ -403,7 +406,6 @@ export default function ContactManagement() {
         </form>
       </FormProvider>
 
-
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
@@ -433,12 +435,7 @@ function DeptBlock({
 }) {
   const { setValue } = useFormContext<ContactFormValues>();
 
-  const {
-    fields: contactFields,
-    append: appendContact,
-    remove: removeContact,
-    replace: replaceContacts,
-  } = useFieldArray({
+  const { fields: contactFields, append: appendContact, remove: removeContact, replace: replaceContacts } = useFieldArray({
     control,
     name: `contactDepartments.${deptIndex}.contacts`,
   });
@@ -490,8 +487,8 @@ function DeptBlock({
             {membersOfDesignation.length > 0
               ? `${membersOfDesignation.length} member(s) will appear below`
               : selectedDesignation
-              ? "No members found for this designation"
-              : ""}
+                ? "No members found for this designation"
+                : ""}
           </p>
         </div>
         <button
@@ -503,7 +500,6 @@ function DeptBlock({
           <Trash2 size={16} />
         </button>
       </div>
-
 
       {/* Contact persons — names pre-filled from designation, phone editable */}
       <div className="space-y-3">
@@ -558,3 +554,4 @@ function DeptBlock({
     </div>
   );
 }
+
