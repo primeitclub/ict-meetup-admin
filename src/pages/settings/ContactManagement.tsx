@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
 import { Plus, Save, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
@@ -31,7 +31,6 @@ import type { TeamMember } from "../../types/team";
 interface ContactFormValues {
   email: string;
   phoneNumber: string;
-  teamName: string;
   contactDepartments: ContactDepartment[];
 }
 
@@ -51,7 +50,6 @@ export default function ContactManagement() {
     defaultValues: {
       email: "",
       phoneNumber: "",
-      teamName: "",
       contactDepartments: [],
     },
   });
@@ -136,14 +134,12 @@ export default function ContactManagement() {
       reset({
         email: settings.email || "",
         phoneNumber: settings.phoneNumber || "",
-        teamName: settings.teamName || "",
         contactDepartments: settings.contactDepartments || [],
       });
     } else {
       reset({
         email: "",
         phoneNumber: "",
-        teamName: "",
         contactDepartments: [],
       });
     }
@@ -193,7 +189,6 @@ export default function ContactManagement() {
     await save(selectedVersionId, (fd) => {
       fd.append("email", data.email.trim());
       fd.append("phoneNumber", data.phoneNumber.trim());
-      fd.append("teamName", data.teamName.trim());
       fd.append("contactDepartments", JSON.stringify(data.contactDepartments));
     });
 
@@ -201,7 +196,6 @@ export default function ContactManagement() {
     reset({
       email: "",
       phoneNumber: "",
-      teamName: "",
       contactDepartments: [],
     });
   };
@@ -295,13 +289,6 @@ export default function ContactManagement() {
                   maxLength: { value: 20, message: "Max 20 characters" },
                 }}
               />
-              <FormSelect
-                name="teamName"
-                label="Team Name"
-                options={teamOptions}
-                placeholder="Select a team member"
-                isLoading={isLoadingTeams}
-              />
             </div>
 
             <Divider />
@@ -319,6 +306,7 @@ export default function ContactManagement() {
                   key={deptField.id}
                   control={control}
                   deptIndex={deptIndex}
+                  allMembers={teamsData?.data?.items ?? []}
                   onRemoveDept={() => removeDept(deptIndex)}
                 />
               ))}
@@ -351,10 +339,10 @@ export default function ContactManagement() {
                   <Text size="xs" variant="muted">Phone Number</Text>
                   <Text>{settings?.phoneNumber ?? "—"}</Text>
                 </div>
-                <div className="rounded-lg border border-border p-4 space-y-1">
+                {/* <div className="rounded-lg border border-border p-4 space-y-1">
                   <Text size="xs" variant="muted">Team Name</Text>
                   <Text>{settings?.teamName ?? "—"}</Text>
-                </div>
+                </div> */}
               </div>
 
               <div className="space-y-3">
@@ -435,31 +423,77 @@ export default function ContactManagement() {
 function DeptBlock({
   control,
   deptIndex,
+  allMembers,
   onRemoveDept,
 }: {
   control: ReturnType<typeof useForm<ContactFormValues>>["control"];
   deptIndex: number;
+  allMembers: TeamMember[];
   onRemoveDept: () => void;
 }) {
+  const { setValue } = useFormContext<ContactFormValues>();
+
   const {
     fields: contactFields,
     append: appendContact,
     remove: removeContact,
+    replace: replaceContacts,
   } = useFieldArray({
     control,
     name: `contactDepartments.${deptIndex}.contacts`,
   });
 
+  const selectedDesignation = useWatch({
+    control,
+    name: `contactDepartments.${deptIndex}.department`,
+  });
+
+  const designationOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return allMembers
+      .filter((m) => m.designation?.name && !seen.has(m.designation.name) && seen.add(m.designation.name))
+      .map((m) => ({ value: m.designation!.name, label: m.designation!.name }));
+  }, [allMembers]);
+
+  const membersOfDesignation = useMemo(
+    () => allMembers.filter((m) => m.designation?.name === selectedDesignation),
+    [allMembers, selectedDesignation],
+  );
+
+  const handleDesignationChange = (designation: string) => {
+    setValue(`contactDepartments.${deptIndex}.department`, designation);
+    const members = allMembers.filter((m) => m.designation?.name === designation);
+    replaceContacts(members.map((m) => ({ name: m.name, phone: "" })));
+  };
+
   return (
     <div className="rounded-lg border border-border p-4 space-y-4">
-      {/* Department header row */}
+      {/* Designation dropdown + remove button */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
-        <FormInput
-          name={`contactDepartments.${deptIndex}.department`}
-          label="Department Name"
-          placeholder="e.g. Events Department"
-          rules={{ required: "Department name is required" }}
-        />
+        <div className="space-y-1 w-full">
+          <label className="text-sm font-medium text-foreground">
+            Designation <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={selectedDesignation || ""}
+            onChange={(e) => handleDesignationChange(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+          >
+            <option value="">Select a designation…</option>
+            {designationOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            {membersOfDesignation.length > 0
+              ? `${membersOfDesignation.length} member(s) will appear below`
+              : selectedDesignation
+              ? "No members found for this designation"
+              : ""}
+          </p>
+        </div>
         <button
           type="button"
           onClick={onRemoveDept}
@@ -470,18 +504,24 @@ function DeptBlock({
         </button>
       </div>
 
-      {/* Contact persons */}
-      <div className="space-y-3 pl-0">
-        {contactFields.length === 0 && (
+
+      {/* Contact persons — names pre-filled from designation, phone editable */}
+      <div className="space-y-3">
+        {contactFields.length === 0 && selectedDesignation && (
           <Text size="sm" variant="muted">
-            No contacts yet. Add one below.
+            No members for this designation yet.
+          </Text>
+        )}
+        {contactFields.length === 0 && !selectedDesignation && (
+          <Text size="sm" variant="muted">
+            Select a designation above to load members.
           </Text>
         )}
 
         {contactFields.map((contactField, contactIndex) => (
           <div
             key={contactField.id}
-            className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-start"
+            className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-start bg-surface-2 rounded-lg p-3"
           >
             <FormInput
               name={`contactDepartments.${deptIndex}.contacts.${contactIndex}.name`}
@@ -512,7 +552,7 @@ function DeptBlock({
           className="inline-flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-accent hover:text-foreground transition-colors"
         >
           <Plus size={14} />
-          Add contact person
+          Add contact manually
         </button>
       </div>
     </div>
