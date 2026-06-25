@@ -1,31 +1,27 @@
 import { useEffect, useState, useMemo } from "react";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { FormProvider, useForm } from "react-hook-form";
+import { Save, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
-import FormSelect from "../../components/form-field/input-select/SelectController";
+import { useApiMutation } from "../../lib/use-api-mutation";
 import Divider from "../../shared/design-components/divider/Divider";
-import { Text } from "../../shared/design-components";
+
+import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
 import SettingsVersionBar from "./SettingsVersionBar";
-import { SOCIAL_PLATFORMS, type SocialPlatform, type Settings } from "../../types/settings";
 import { useApiQuery } from "../../lib";
 import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft } from "lucide-react";
+import type { Settings } from "../../types/settings";
+import { Plus, ArrowLeft } from "lucide-react";
 
-interface SocialFormValues {
-  links: { platform: SocialPlatform | ""; link: string }[];
+interface ClubDetailsFormValues {
+  clubEmail: string;
+  clubPhoneNumber: string;
 }
 
-const platformOptions = SOCIAL_PLATFORMS.map((p) => ({ label: p, value: p }));
-
-const urlRule = {
-  required: "Link is required",
-  pattern: { value: /^https?:\/\/.+/, message: "Must be a valid URL" },
-};
-
-export default function SocialMediaProfile() {
+export default function ClubDetails() {
   const {
     versionOptions,
     selectedVersionId,
@@ -33,14 +29,14 @@ export default function SocialMediaProfile() {
     settings,
     exists,
     isArchived,
+    isDraft,
     refetchSettings,
   } = useSettingsForVersion();
 
-  const methods = useForm<SocialFormValues>({
-    defaultValues: { links: [] },
+  const methods = useForm<ClubDetailsFormValues>({
+    defaultValues: { clubEmail: "", clubPhoneNumber: "" },
   });
-  const { control, handleSubmit, reset } = methods;
-  const { fields, append, remove } = useFieldArray({ control, name: "links" });
+  const { handleSubmit, reset } = methods;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -76,12 +72,14 @@ export default function SocialMediaProfile() {
         },
       },
       {
-        header: "Social Profiles",
-        cell: ({ row }) => {
-          const links = row.original.socialMediaLinks;
-          if (!links || links.length === 0) return "—";
-          return links.map(l => l.platform).join(", ");
-        },
+        accessorKey: "clubEmail",
+        header: "Club Email",
+        cell: ({ row }) => row.original.clubEmail || "—",
+      },
+      {
+        accessorKey: "clubPhoneNumber",
+        header: "Club Phone Number",
+        cell: ({ row }) => row.original.clubPhoneNumber || "—",
       },
       {
         id: "actions",
@@ -103,12 +101,17 @@ export default function SocialMediaProfile() {
   useEffect(() => {
     if (settings) {
       reset({
-        links: settings.socialMediaLinks || [],
+        clubEmail: settings.clubEmail || "",
+        clubPhoneNumber: settings.clubPhoneNumber || "",
       });
     } else {
-      reset({ links: [] });
+      reset({
+        clubEmail: "",
+        clubPhoneNumber: "",
+      });
     }
   }, [settings, reset, selectedVersionId]);
+
 
 
 
@@ -119,20 +122,41 @@ export default function SocialMediaProfile() {
     onSaved: refetchSettings,
   });
 
-  const onSubmit = async (data: SocialFormValues) => {
-    const links = data.links
-      .filter((l) => l.platform && l.link.trim())
-      .map((l) => ({ platform: l.platform, link: l.link.trim() }));
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { execute: deleteSettings, isLoading: isDeleting } = useApiMutation(
+    "settingDetail",
+  )<void, never>({
+    method: "DELETE",
+    invalidateRoutes: ["settings"],
+    onSuccess: () => {
+      toast.success("Settings deleted");
+      refetchSettings();
+    },
+    onError: (err) => toast.error(err.message || "Failed to delete settings"),
+  });
 
+  const onSubmit = async (data: ClubDetailsFormValues) => {
     await save(selectedVersionId, (fd) => {
-      // Multipart → send the array as a JSON string; the server parses it.
-      fd.append("socialMediaLinks", JSON.stringify(links));
+      fd.append("clubEmail", data.clubEmail.trim());
+      fd.append("clubPhoneNumber", data.clubPhoneNumber.trim());
     });
 
     // Clear the form inputs immediately after submit.
-    reset({ links: [] });
+    reset({
+      clubEmail: "",
+      clubPhoneNumber: "",
+    });
   };
 
+
+  const handleConfirmDelete = async () => {
+    if (!settings?.id) return;
+    try {
+      await deleteSettings(undefined, { pathParams: { id: settings.id } });
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
 
   if (!isFormOpen) {
     return (
@@ -141,7 +165,7 @@ export default function SocialMediaProfile() {
           columns={columns}
           data={tableData}
           onRefetch={refetchAll}
-          searchPlaceholder="Search social media..."
+          searchPlaceholder="Search club details..."
           actionRight={
             <button
               onClick={() => {
@@ -173,12 +197,12 @@ export default function SocialMediaProfile() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h2 className="text-lg font-medium">Add/Edit Social Media Profile</h2>
+        <h2 className="text-lg font-medium">Add/Edit Club Details</h2>
       </div>
       <div className="p-6">
         <SettingsVersionBar
-          title="Social Media Profile"
-          description="Links shown for this version. Allowed platforms: Facebook, Instagram, LinkedIn, Twitter, TikTok."
+          title="Club Details"
+          description="Email and phone number of the organizing club."
           versionOptions={versionOptions}
           selectedVersionId={selectedVersionId}
           onVersionChange={(v) => setVersion(v)}
@@ -190,75 +214,69 @@ export default function SocialMediaProfile() {
 
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="p-6 space-y-4">
-            {fields.length === 0 && (
-              <Text size="sm" variant="muted">
-                No social links yet. Add one below.
-              </Text>
-            )}
-
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="grid grid-cols-1 md:grid-cols-[12rem_1fr_auto] gap-4 items-start"
-              >
-                <FormSelect
-                  name={`links.${index}.platform`}
-                  label="Platform"
-                  options={platformOptions}
-                  rules={{ required: "Required" }}
-                />
-                <FormInput
-                  name={`links.${index}.link`}
-                  label="Link"
-                  placeholder="https://instagram.com/ictmeetup"
-                  rules={urlRule}
-                />
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="mt-7 inline-flex items-center justify-center rounded-lg p-2 text-red-500 hover:bg-red-500/10 transition-colors"
-                  aria-label="Remove link"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => append({ platform: "", link: "" })}
-              className="inline-flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:border-accent hover:text-foreground transition-colors"
-            >
-              <Plus size={16} />
-              Add social link
-            </button>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormInput
+                name="clubEmail"
+                label="Club Email"
+                type="email"
+                placeholder="club@prime.edu.np"
+                rules={{
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Enter a valid email",
+                  },
+                }}
+              />
+              <FormInput
+                name="clubPhoneNumber"
+                label="Club Phone Number"
+                placeholder="+977 98XXXXXXXX"
+                rules={{
+                  maxLength: { value: 20, message: "Max 20 characters" },
+                }}
+              />
+            </div>
           </div>
 
           {/* Current values (saved) */}
           <div className="mt-6">
             <Divider />
             <div className="pt-4 space-y-3">
-              <Text size="sm" variant="muted">Current values for this version</Text>
+              <p className="text-sm text-muted-foreground">
+                Current values for this version
+              </p>
 
-              {(settings?.socialMediaLinks?.length ?? 0) === 0 ? (
-                <Text size="sm" variant="muted">No social links saved yet.</Text>
-              ) : (
-                <div className="space-y-3">
-                  {settings?.socialMediaLinks?.map((l, idx) => (
-                    <div key={`${l.platform}-${idx}`} className="rounded-lg border border-border p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <Text size="sm" className="font-medium">{l.platform}</Text>
-                        <Text size="xs" variant="muted">{l.link}</Text>
-                      </div>
-                    </div>
-                  ))}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground">Club Email</p>
+                  <p>{settings?.clubEmail ?? "—"}</p>
+
                 </div>
-              )}
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground">Club Phone Number</p>
+                  <p>{settings?.clubPhoneNumber ?? "—"}</p>
+
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
+          <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-border bg-surface px-6 py-4">
+
+            <div>
+              {exists && isDraft && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash2 size={16} />
+                  Delete settings
+                </button>
+              )}
+            </div>
             <button
               type="submit"
               disabled={isSaving || isArchived || !selectedVersionId}
@@ -275,6 +293,17 @@ export default function SocialMediaProfile() {
         </form>
       </FormProvider>
 
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete settings?"
+        description="This permanently deletes this version's settings (contact, social links, and QR code). Only allowed while the version is a draft."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

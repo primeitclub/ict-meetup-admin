@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Save, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import FormFileUpload from "../../components/form-field/FormFileUpload";
@@ -7,6 +7,12 @@ import Divider from "../../shared/design-components/divider/Divider";
 import { Text } from "../../shared/design-components";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
 import SettingsVersionBar from "./SettingsVersionBar";
+import { useApiQuery } from "../../lib";
+import Table from "../../components/table/Table";
+import TableRowActions from "../../components/table/TableRowActions";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Settings } from "../../types/settings";
+import { Plus, ArrowLeft } from "lucide-react";
 
 export default function PaymentSetup() {
   const {
@@ -22,8 +28,75 @@ export default function PaymentSetup() {
   const [qrFile, setQrFile] = useState<File | null>(null);
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
 
-  // New pick wins; otherwise show the saved QR code.
-  const preview = uploadedPreview ?? settings?.qrCodeUrl ?? null;
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const { data: allSettingsData, isLoading: isLoadingAll, refetch: refetchAll } = useApiQuery("settings")<{
+    data: { items: Settings[] };
+  }>({
+    enabled: !isFormOpen,
+  });
+
+  const tableData = allSettingsData?.data?.items ?? [];
+
+  const columns: ColumnDef<Settings>[] = useMemo(
+    () => [
+      {
+        id: "sn",
+        header: "S.N",
+        cell: ({ row }) => row.index + 1,
+      },
+      {
+        header: "Version",
+        accessorKey: "flagshipEventVersion.version_number",
+        cell: ({ row }) => {
+          const version = row.original.flagshipEventVersion;
+          if (!version) return <span className="text-muted-foreground">—</span>;
+          return (
+            <div>
+              {version.version_number}
+              {version.is_current && (
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        header: "QR Code",
+        cell: ({ row }) => {
+          const url = row.original.qrCodeUrl;
+          if (!url) return <span className="text-muted-foreground">—</span>;
+          return (
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-surface-2 overflow-hidden">
+              <img src={url} alt="QR Code" className="h-full w-full object-cover" />
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <TableRowActions
+            onEdit={() => {
+              setVersion(row.original.versionId);
+              setIsFormOpen(true);
+            }}
+          />
+        ),
+      },
+    ],
+    [setVersion]
+  );
+
+  // Upload area shows only a newly picked file — saved QR is shown in "Current values".
+  const preview = uploadedPreview;
+
+  // Keep the upload area empty when switching versions.
+  useEffect(() => {
+    setQrFile(null);
+    setUploadedPreview(null);
+  }, [selectedVersionId]);
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -39,6 +112,7 @@ export default function PaymentSetup() {
     "settingQrCode",
   )<{ data: unknown }, never>({
     method: "DELETE",
+    invalidateRoutes: ["settings"],
     onSuccess: () => {
       toast.success("QR code removed");
       setQrFile(null);
@@ -63,6 +137,9 @@ export default function PaymentSetup() {
   const handleSave = async () => {
     if (!qrFile) return;
     await save(selectedVersionId, (fd) => fd.append("qrCode", qrFile));
+    // Clear the upload inputs immediately after submit.
+    setQrFile(null);
+    setUploadedPreview(null);
   };
 
   const handleRemove = async () => {
@@ -70,8 +147,47 @@ export default function PaymentSetup() {
     await removeQrCode(undefined, { pathParams: { id: settings.id } });
   };
 
+  if (!isFormOpen) {
+    return (
+      <div className="space-y-6">
+        <Table
+          columns={columns}
+          data={tableData}
+          onRefetch={refetchAll}
+          searchPlaceholder="Search payment setup..."
+          actionRight={
+            <button
+              onClick={() => {
+                setVersion(versionOptions[0]?.value);
+                setIsFormOpen(true);
+              }}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Plus size={16} />
+              Add settings
+            </button>
+          }
+        />
+        {isLoadingAll && (
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-surface border border-border rounded-lg w-full shadow-sm">
+      <div className="p-4 border-b border-border flex items-center gap-4">
+        <button
+          onClick={() => setIsFormOpen(false)}
+          className="p-2 hover:bg-surface-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-medium">Add/Edit Payment Setup</h2>
+      </div>
       <div className="p-6">
         <SettingsVersionBar
           title="Payment Setup"
@@ -113,9 +229,26 @@ export default function PaymentSetup() {
             Select a version to manage its QR code.
           </Text>
         )}
+
+        {/* Current values (saved) */}
+        <div className="pt-2">
+          <Divider />
+          <div className="pt-4 space-y-2">
+            <Text size="sm" variant="muted">Current values for this version</Text>
+            {settings?.qrCodeUrl ? (
+              <div className="rounded-lg border border-border p-4 space-y-2">
+                <Text size="xs" variant="muted">Stored QR Code URL</Text>
+                <Text>{settings.qrCodeUrl}</Text>
+              </div>
+            ) : (
+              <Text size="sm" variant="muted">No QR code saved yet.</Text>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
+
         <button
           type="button"
           onClick={handleSave}

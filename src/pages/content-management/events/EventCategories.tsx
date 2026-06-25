@@ -24,6 +24,7 @@ export default function EventCategories() {
     "eventCategoryDetail",
   )<void, never>({
     method: "DELETE",
+    invalidateRoutes: ["eventCategories"],
     onSuccess: () => refetch(),
     onError: (error) =>
       toast.error(error.message || "Failed to delete category"),

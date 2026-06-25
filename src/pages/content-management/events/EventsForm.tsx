@@ -161,6 +161,29 @@ export default function EventsForm() {
     }
   }, [existingData, reset]);
 
+  useEffect(() => {
+    if (!isEdit) {
+      reset({
+        title: "",
+        subtitle: "",
+        description: "",
+        startTime: "",
+        endTime: "",
+        date: "",
+        categoryId: "",
+        versionId: "",
+        speakerId: "",
+        totalSeats: "",
+        feeType: "",
+        fee: "",
+        location: "",
+        status: "",
+        registrationDeadline: "",
+        displayOrder: "",
+      });
+    }
+  }, [isEdit, reset]);
+
   const { execute: createEvent, isLoading: isCreating } = useApiMutation(
     "events",
   )<EventItem, FormData>({

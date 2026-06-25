@@ -54,10 +54,20 @@ export default function EventCategoryForm() {
     }
   }, [existingData, reset]);
 
+  useEffect(() => {
+    if (!isEdit) {
+      reset({
+        name: "",
+        displayOrder: "",
+      });
+    }
+  }, [isEdit, reset]);
+
   const { execute: createCategory, isLoading: isCreating } = useApiMutation(
     "eventCategories",
   )<EventCategory, EventCategoryPayload>({
     method: "POST",
+    invalidateRoutes: ["eventCategories"],
     onSuccess: () => {
       toast.success("Category created successfully");
       navigate(LIST_PATH);
@@ -70,6 +80,7 @@ export default function EventCategoryForm() {
   )<EventCategory, EventCategoryPayload>({
     method: "PATCH",
     pathParams: { id: id as string },
+    invalidateRoutes: ["eventCategories"],
     onSuccess: () => {
       toast.success("Category updated successfully");
       navigate(LIST_PATH);

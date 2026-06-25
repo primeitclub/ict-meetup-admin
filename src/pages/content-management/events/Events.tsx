@@ -34,6 +34,7 @@ export default function Events() {
     "eventDetail",
   )<void, never>({
     method: "DELETE",
+    invalidateRoutes: ["events"],
     onSuccess: () => refetch(),
     onError: (error) => toast.error(error.message || "Failed to delete event"),
   });

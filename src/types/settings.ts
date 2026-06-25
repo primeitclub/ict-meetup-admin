@@ -16,6 +16,16 @@ export interface SocialMediaLink {
   link: string;
 }
 
+export interface ContactPerson {
+  name: string;
+  phone: string;
+}
+
+export interface ContactDepartment {
+  department: string;
+  contacts: ContactPerson[];
+}
+
 /** Per-version contact / branding settings. At most one per version. */
 export interface Settings {
   id: string;
@@ -23,7 +33,10 @@ export interface Settings {
   email: string | null;
   phoneNumber: string | null;
   teamName: string | null;
+  clubEmail: string | null;
+  clubPhoneNumber: string | null;
   socialMediaLinks: SocialMediaLink[] | null;
+  contactDepartments: ContactDepartment[] | null;
   /** Cloudinary URL — use this to display the QR code. */
   qrCodeUrl: string | null;
   /** Internal — ignore on the frontend. */
