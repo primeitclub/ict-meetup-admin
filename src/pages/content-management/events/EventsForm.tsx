@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Save } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../../components/form-field/input-field/InputController";
@@ -42,6 +42,7 @@ interface EventFormValues {
   status: EventStatus | "";
   registrationDeadline: string;
   displayOrder: string;
+  isHighlighted: boolean;
 }
 
 const feeTypeOptions = [
@@ -118,6 +119,7 @@ export default function EventsForm() {
       status: "",
       registrationDeadline: "",
       displayOrder: "",
+      isHighlighted: false,
     },
   });
   const {
@@ -126,10 +128,16 @@ export default function EventsForm() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = methods;
 
   const isPaid = watch("feeType") === "paid";
+  const isHighlighted = watch("isHighlighted");
+  const toggleHighlighted = useCallback(
+    () => setValue("isHighlighted", !isHighlighted, { shouldDirty: true }),
+    [isHighlighted, setValue],
+  );
 
   const imagePreview = imageCleared
     ? null
@@ -157,6 +165,7 @@ export default function EventsForm() {
           ? ev.registrationDeadline.split("T")[0]
           : "",
         displayOrder: ev.displayOrder?.toString() ?? "",
+        isHighlighted: ev.isHighlighted ?? false,
       });
     }
   }, [existingData, reset]);
@@ -419,6 +428,37 @@ export default function EventsForm() {
                 />
               </div>
             </div>
+
+            {/* Highlighted toggle */}
+            <Controller
+              control={control}
+              name="isHighlighted"
+              render={({ field }) => (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={field.value}
+                    onClick={toggleHighlighted}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+                      field.value ? "bg-accent" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+                        field.value ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Highlighted</span>
+                    <span className="text-xs text-muted-foreground">
+                      Feature this event in the highlights section
+                    </span>
+                  </div>
+                </div>
+              )}
+            />
 
             <Divider />
 
