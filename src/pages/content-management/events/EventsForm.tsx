@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Save } from "lucide-react";
@@ -72,10 +72,6 @@ export default function EventsForm() {
     "eventCategories",
   )<{ data: { items: EventCategory[] } }>();
 
-  const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
-    "speakers",
-  )<{ data: { items: Speaker[] } }>();
-
   const categoryOptions = useMemo(
     () =>
       (categoriesData?.data?.items ?? []).map((category) => ({
@@ -83,15 +79,6 @@ export default function EventsForm() {
         value: category.id,
       })),
     [categoriesData],
-  );
-
-  const speakerOptions = useMemo(
-    () =>
-      (speakersData?.data?.items ?? []).map((speaker) => ({
-        label: speaker.name,
-        value: speaker.id,
-      })),
-    [speakersData],
   );
 
   const { data: existingData, isLoading: isFetching } = useApiQuery(
@@ -133,11 +120,40 @@ export default function EventsForm() {
   } = methods;
 
   const isPaid = watch("feeType") === "paid";
+  const selectedVersionId = watch("versionId");
   const isHighlighted = watch("isHighlighted");
+
+  const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
+    "speakers",
+  )<{ data: { items: Speaker[] } }>({
+    queryParams: { versionId: selectedVersionId },
+    config: { enabled: !!selectedVersionId },
+  });
+
+  const speakerOptions = useMemo(
+    () =>
+      (speakersData?.data?.items ?? []).map((speaker) => ({
+        label: speaker.name,
+        value: speaker.id,
+      })),
+    [speakersData],
+  );
+
   const toggleHighlighted = useCallback(
     () => setValue("isHighlighted", !isHighlighted, { shouldDirty: true }),
     [isHighlighted, setValue],
   );
+
+  const prevVersionIdRef = useRef<string>("");
+  useEffect(() => {
+    const prev = prevVersionIdRef.current;
+    prevVersionIdRef.current = selectedVersionId;
+    // Only clear speakerId when the user actively switches from one valid version to another.
+    // Skip when going from "" → something (initial load / reset populating the form).
+    if (prev && selectedVersionId && prev !== selectedVersionId) {
+      setValue("speakerId", "", { shouldDirty: false });
+    }
+  }, [selectedVersionId, setValue]);
 
   const imagePreview = imageCleared
     ? null
@@ -150,8 +166,8 @@ export default function EventsForm() {
         title: ev.title ?? "",
         subtitle: ev.subtitle ?? "",
         description: ev.description ?? "",
-        startTime: ev.startTime ?? "",
-        endTime: ev.endTime ?? "",
+        startTime: ev.startTime ? ev.startTime.slice(0, 5) : "",
+        endTime: ev.endTime ? ev.endTime.slice(0, 5) : "",
         date: ev.date ? ev.date.split("T")[0] : "",
         categoryId: ev.categoryId ?? "",
         versionId: ev.versionId ?? "",
@@ -189,6 +205,7 @@ export default function EventsForm() {
         status: "",
         registrationDeadline: "",
         displayOrder: "",
+        isHighlighted: false,
       });
     }
   }, [isEdit, reset]);
@@ -363,11 +380,17 @@ export default function EventsForm() {
                 label="Speaker"
                 options={speakerOptions}
                 placeholder={
-                  speakersLoading ? "Loading speakers…" : "Select a speaker"
+                  isFetching
+                    ? "Loading…"
+                    : !selectedVersionId
+                      ? "Select a version first"
+                      : speakersLoading
+                        ? "Loading speakers…"
+                        : "Select a speaker"
                 }
                 searchPlaceholder="Search speakers…"
                 emptyText="No speakers found"
-                disabled={speakersLoading}
+                disabled={isFetching || (!selectedVersionId && !isEdit) || speakersLoading}
                 error={errors.speakerId?.message}
               />
               <FormInput
