@@ -38,6 +38,7 @@ export interface EventItem {
   imagePath: string | null;
   /** Full, displayable URL returned by the API — use this for previews/tables. */
   imageUrl: string | null;
+  isHighlighted: boolean;
 }
 
 export interface EventCategory {
