@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import { Save } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../../components/form-field/input-field/InputController";
@@ -42,6 +42,7 @@ interface EventFormValues {
   status: EventStatus | "";
   registrationDeadline: string;
   displayOrder: string;
+  isHighlighted: boolean;
 }
 
 const feeTypeOptions = [
@@ -71,10 +72,6 @@ export default function EventsForm() {
     "eventCategories",
   )<{ data: { items: EventCategory[] } }>();
 
-  const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
-    "speakers",
-  )<{ data: { items: Speaker[] } }>();
-
   const categoryOptions = useMemo(
     () =>
       (categoriesData?.data?.items ?? []).map((category) => ({
@@ -82,15 +79,6 @@ export default function EventsForm() {
         value: category.id,
       })),
     [categoriesData],
-  );
-
-  const speakerOptions = useMemo(
-    () =>
-      (speakersData?.data?.items ?? []).map((speaker) => ({
-        label: speaker.name,
-        value: speaker.id,
-      })),
-    [speakersData],
   );
 
   const { data: existingData, isLoading: isFetching } = useApiQuery(
@@ -118,6 +106,7 @@ export default function EventsForm() {
       status: "",
       registrationDeadline: "",
       displayOrder: "",
+      isHighlighted: false,
     },
   });
   const {
@@ -126,10 +115,45 @@ export default function EventsForm() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = methods;
 
   const isPaid = watch("feeType") === "paid";
+  const selectedVersionId = watch("versionId");
+  const isHighlighted = watch("isHighlighted");
+
+  const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
+    "speakers",
+  )<{ data: { items: Speaker[] } }>({
+    queryParams: { versionId: selectedVersionId },
+    config: { enabled: !!selectedVersionId },
+  });
+
+  const speakerOptions = useMemo(
+    () =>
+      (speakersData?.data?.items ?? []).map((speaker) => ({
+        label: speaker.name,
+        value: speaker.id,
+      })),
+    [speakersData],
+  );
+
+  const toggleHighlighted = useCallback(
+    () => setValue("isHighlighted", !isHighlighted, { shouldDirty: true }),
+    [isHighlighted, setValue],
+  );
+
+  const prevVersionIdRef = useRef<string>("");
+  useEffect(() => {
+    const prev = prevVersionIdRef.current;
+    prevVersionIdRef.current = selectedVersionId;
+    // Only clear speakerId when the user actively switches from one valid version to another.
+    // Skip when going from "" → something (initial load / reset populating the form).
+    if (prev && selectedVersionId && prev !== selectedVersionId) {
+      setValue("speakerId", "", { shouldDirty: false });
+    }
+  }, [selectedVersionId, setValue]);
 
   const imagePreview = imageCleared
     ? null
@@ -142,8 +166,8 @@ export default function EventsForm() {
         title: ev.title ?? "",
         subtitle: ev.subtitle ?? "",
         description: ev.description ?? "",
-        startTime: ev.startTime ?? "",
-        endTime: ev.endTime ?? "",
+        startTime: ev.startTime ? ev.startTime.slice(0, 5) : "",
+        endTime: ev.endTime ? ev.endTime.slice(0, 5) : "",
         date: ev.date ? ev.date.split("T")[0] : "",
         categoryId: ev.categoryId ?? "",
         versionId: ev.versionId ?? "",
@@ -157,6 +181,7 @@ export default function EventsForm() {
           ? ev.registrationDeadline.split("T")[0]
           : "",
         displayOrder: ev.displayOrder?.toString() ?? "",
+        isHighlighted: ev.isHighlighted ?? false,
       });
     }
   }, [existingData, reset]);
@@ -180,6 +205,7 @@ export default function EventsForm() {
         status: "",
         registrationDeadline: "",
         displayOrder: "",
+        isHighlighted: false,
       });
     }
   }, [isEdit, reset]);
@@ -356,11 +382,17 @@ export default function EventsForm() {
                 label="Speaker"
                 options={speakerOptions}
                 placeholder={
-                  speakersLoading ? "Loading speakers…" : "Select a speaker"
+                  isFetching
+                    ? "Loading…"
+                    : !selectedVersionId
+                      ? "Select a version first"
+                      : speakersLoading
+                        ? "Loading speakers…"
+                        : "Select a speaker"
                 }
                 searchPlaceholder="Search speakers…"
                 emptyText="No speakers found"
-                disabled={speakersLoading}
+                disabled={isFetching || (!selectedVersionId && !isEdit) || speakersLoading}
                 error={errors.speakerId?.message}
               />
               <FormInput
@@ -421,6 +453,37 @@ export default function EventsForm() {
                 />
               </div>
             </div>
+
+            {/* Highlighted toggle */}
+            <Controller
+              control={control}
+              name="isHighlighted"
+              render={({ field }) => (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={field.value}
+                    onClick={toggleHighlighted}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+                      field.value ? "bg-accent" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+                        field.value ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Highlighted</span>
+                    <span className="text-xs text-muted-foreground">
+                      Feature this event in the highlights section
+                    </span>
+                  </div>
+                </div>
+              )}
+            />
 
             <Divider />
 
