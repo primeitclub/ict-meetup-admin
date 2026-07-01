@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
 import FormSelect from "../../components/form-field/input-select/SelectController";
 import FormFileUpload from "../../components/form-field/FormFileUpload";
+import Textarea from "../../components/form-field/Textarea";
 import useGetVersionOptions from "../../lib/hooks/use-get-version-options";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
@@ -17,6 +18,7 @@ import { Text } from "../../shared/design-components";
 interface SpeakerFormValues {
   name: string;
   designation: string;
+  description: string;
   company: string;
   versionId: string;
   displayOrder: string;
@@ -58,6 +60,7 @@ export default function SpeakersForm() {
     defaultValues: {
       name: "",
       designation: "",
+      description: "",
       company: "",
       versionId: "",
       displayOrder: "",
@@ -66,7 +69,7 @@ export default function SpeakersForm() {
       portfolio: "",
     },
   });
-  const { handleSubmit, reset } = methods;
+  const { handleSubmit, reset, register, formState: { errors } } = methods;
 
   const imagePreview = imageCleared
     ? null
@@ -78,6 +81,7 @@ export default function SpeakersForm() {
       reset({
         name: speaker.name ?? "",
         designation: speaker.designation ?? "",
+        description: speaker.description ?? "",
         company: speaker.company ?? "",
         versionId: speaker.versionId ?? "",
         displayOrder: speaker.displayOrder?.toString() ?? "",
@@ -127,6 +131,7 @@ export default function SpeakersForm() {
     const formData = new FormData();
     formData.append("name", data.name.trim());
     formData.append("designation", data.designation.trim());
+    if (data.description.trim()) formData.append("description", data.description.trim());
     if (data.company.trim()) formData.append("company", data.company.trim());
     formData.append("versionId", data.versionId);
     if (data.displayOrder.trim()) {
@@ -226,6 +231,18 @@ export default function SpeakersForm() {
                 rules={{ min: { value: 1, message: "Must be at least 1" } }}
               />
             </div>
+
+            <Divider />
+
+            {/* Description */}
+            <Textarea
+              label="Description"
+              placeholder="Brief bio or talk description"
+              {...register("description", {
+                maxLength: { value: 2000, message: "Max 2000 characters" },
+              })}
+              error={errors.description?.message}
+            />
 
             <Divider />
 

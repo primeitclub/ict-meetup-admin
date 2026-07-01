@@ -117,7 +117,7 @@ export default function SponsorForm() {
     const orders = (categorySponsors?.data?.items ?? []).map(
       (s) => s.displayOrder,
     );
-    const next = orders.length ? Math.max(...orders) + 1 : 0;
+    const next = orders.length ? Math.max(...orders) + 1 : 1;
     setValue("displayOrder", String(next), { shouldDirty: false });
   }, [
     isEdit,
@@ -262,11 +262,13 @@ export default function SponsorForm() {
                 name="displayOrder"
                 label="Display Order"
                 type="number"
-                placeholder="0"
+                placeholder="1"
                 rules={{
-                  min: { value: 0, message: "Must be 0 or more" },
+                  required: "Display order is required",
+                  min: { value: 1, message: "Must be at least 1" },
                   max: { value: 100, message: "Must be 100 or less" },
                 }}
+                isRequired
               />
               <FormInput
                 name="link"

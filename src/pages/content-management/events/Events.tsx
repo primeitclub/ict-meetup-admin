@@ -116,15 +116,15 @@ export default function Events() {
       },
       {
         header: "Version",
-        accessorKey: "flagshipEventVersion.version_number",
+        accessorKey: "flagshipEvent.version_name",
         cell: ({ row }) => {
-          const version = row.original.flagshipEventVersion;
+          const version = row.original.flagshipEvent;
           if (!version) return <span className="text-muted-foreground">—</span>;
           return (
-            <div>
-              {version.version_number}
+            <div className="flex items-center gap-1">
+              <span>{version.version_name}</span>
               {version.is_current && (
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full" />
               )}
             </div>
           );

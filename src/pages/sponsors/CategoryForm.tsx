@@ -152,7 +152,11 @@ export default function CategoryForm() {
                 label="Display Order"
                 type="number"
                 placeholder="1"
-                rules={{ min: { value: 1, message: "Must be at least 1" } }}
+                rules={{
+                  required: "Display order is required",
+                  min: { value: 1, message: "Must be at least 1" },
+                }}
+                isRequired
               />
             </div>
           </div>

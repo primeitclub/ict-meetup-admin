@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { Plus, Save, Trash2 } from "lucide-react";
 import FormInput from "../../components/form-field/input-field/InputController";
@@ -6,13 +6,7 @@ import FormSelect from "../../components/form-field/input-select/SelectControlle
 import Divider from "../../shared/design-components/divider/Divider";
 import { Text } from "../../shared/design-components";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
-import SettingsVersionBar from "./SettingsVersionBar";
-import { SOCIAL_PLATFORMS, type SocialPlatform, type Settings } from "../../types/settings";
-import { useApiQuery } from "../../lib";
-import Table from "../../components/table/Table";
-import TableRowActions from "../../components/table/TableRowActions";
-import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft } from "lucide-react";
+import { SOCIAL_PLATFORMS, type SocialPlatform } from "../../types/settings";
 
 interface SocialFormValues {
   links: { platform: SocialPlatform | ""; link: string }[];
@@ -27,9 +21,7 @@ const urlRule = {
 
 export default function SocialMediaProfile() {
   const {
-    versionOptions,
     selectedVersionId,
-    setVersion,
     settings,
     exists,
     isArchived,
@@ -42,76 +34,13 @@ export default function SocialMediaProfile() {
   const { control, handleSubmit, reset } = methods;
   const { fields, append, remove } = useFieldArray({ control, name: "links" });
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
-
-  const { data: allSettingsData, isLoading: isLoadingAll, refetch: refetchAll } = useApiQuery("settings")<{
-    data: { items: Settings[] };
-  }>({
-    enabled: !isFormOpen,
-  });
-
-  const tableData = allSettingsData?.data?.items ?? [];
-
-  const columns: ColumnDef<Settings>[] = useMemo(
-    () => [
-      {
-        id: "sn",
-        header: "S.N",
-        cell: ({ row }) => row.index + 1,
-      },
-      {
-        header: "Version",
-        accessorKey: "flagshipEventVersion.version_number",
-        cell: ({ row }) => {
-          const version = row.original.flagshipEventVersion;
-          if (!version) return <span className="text-muted-foreground">—</span>;
-          return (
-            <div>
-              {version.version_number}
-              {version.is_current && (
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        header: "Social Profiles",
-        cell: ({ row }) => {
-          const links = row.original.socialMediaLinks;
-          if (!links || links.length === 0) return "—";
-          return links.map(l => l.platform).join(", ");
-        },
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <TableRowActions
-            onEdit={() => {
-              setVersion(row.original.versionId);
-              setIsFormOpen(true);
-            }}
-          />
-        ),
-      },
-    ],
-    [setVersion]
-  );
-
-  // Populate the form with existing settings so the user can update them.
   useEffect(() => {
     if (settings) {
-      reset({
-        links: settings.socialMediaLinks || [],
-      });
+      reset({ links: settings.socialMediaLinks || [] });
     } else {
       reset({ links: [] });
     }
   }, [settings, reset, selectedVersionId]);
-
-
-
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -125,65 +54,17 @@ export default function SocialMediaProfile() {
       .map((l) => ({ platform: l.platform, link: l.link.trim() }));
 
     await save(selectedVersionId, (fd) => {
-      // Multipart → send the array as a JSON string; the server parses it.
       fd.append("socialMediaLinks", JSON.stringify(links));
     });
-
-    // Clear the form inputs immediately after submit.
-    reset({ links: [] });
   };
-
-
-  if (!isFormOpen) {
-    return (
-      <div className="space-y-6">
-        <Table
-          columns={columns}
-          data={tableData}
-          onRefetch={refetchAll}
-          searchPlaceholder="Search social media..."
-          actionRight={
-            <button
-              onClick={() => {
-                setVersion(versionOptions[0]?.value);
-                setIsFormOpen(true);
-              }}
-              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              <Plus size={16} />
-              Add settings
-            </button>
-          }
-        />
-        {isLoadingAll && (
-          <div className="flex justify-center py-8">
-            <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return (
     <div className="bg-surface border border-border rounded-lg w-full shadow-sm">
-      <div className="p-4 border-b border-border flex items-center gap-4">
-        <button
-          onClick={() => setIsFormOpen(false)}
-          className="p-2 hover:bg-surface-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h2 className="text-lg font-medium">Add/Edit Social Media Profile</h2>
-      </div>
       <div className="p-6">
-        <SettingsVersionBar
-          title="Social Media Profile"
-          description="Links shown for this version. Allowed platforms: Facebook, Instagram, LinkedIn, Twitter, TikTok."
-          versionOptions={versionOptions}
-          selectedVersionId={selectedVersionId}
-          onVersionChange={(v) => setVersion(v)}
-          isArchived={isArchived}
-        />
+        <h2 className="text-lg font-semibold">Social Media Profile</h2>
+        <Text size="sm" variant="muted">
+          Social media links shown for the club. Allowed platforms: Facebook, Instagram, LinkedIn, Twitter, TikTok.
+        </Text>
       </div>
 
       <Divider />
@@ -235,29 +116,6 @@ export default function SocialMediaProfile() {
             </button>
           </div>
 
-          {/* Current values (saved) */}
-          <div className="mt-6">
-            <Divider />
-            <div className="pt-4 space-y-3">
-              <Text size="sm" variant="muted">Current values for this version</Text>
-
-              {(settings?.socialMediaLinks?.length ?? 0) === 0 ? (
-                <Text size="sm" variant="muted">No social links saved yet.</Text>
-              ) : (
-                <div className="space-y-3">
-                  {settings?.socialMediaLinks?.map((l, idx) => (
-                    <div key={`${l.platform}-${idx}`} className="rounded-lg border border-border p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <Text size="sm" className="font-medium">{l.platform}</Text>
-                        <Text size="xs" variant="muted">{l.link}</Text>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
           <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
             <button
               type="submit"
@@ -274,7 +132,6 @@ export default function SocialMediaProfile() {
           </div>
         </form>
       </FormProvider>
-
     </div>
   );
 }
