@@ -111,8 +111,12 @@ export default function Registrations() {
       {
         id: "payment",
         header: "Payment",
-        cell: ({ row }) =>
-          row.original.attachedPaymentScreenshot ? (
+        cell: ({ row }) => {
+          const selectedEvent = events.find((e) => e.id === selectedEventId);
+          if (selectedEvent && selectedEvent.feeType === "free") {
+            return <span className="text-muted-foreground text-xs">—</span>;
+          }
+          return row.original.attachedPaymentScreenshot ? (
             <a
               href={row.original.attachedPaymentScreenshot}
               target="_blank"
@@ -124,7 +128,8 @@ export default function Registrations() {
             </a>
           ) : (
             <span className="text-muted-foreground text-xs">—</span>
-          ),
+          );
+        },
       },
       {
         accessorKey: "status",
@@ -190,7 +195,7 @@ export default function Registrations() {
         },
       },
     ],
-    [handleStatusChange],
+    [handleStatusChange, events, selectedEventId],
   );
 
   const items = data?.data?.items ?? [];

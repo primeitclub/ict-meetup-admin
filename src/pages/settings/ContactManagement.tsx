@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FormProvider, useFieldArray, useForm, useFormContext } from "react-hook-form";
+import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { Plus, Save, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
@@ -202,7 +202,7 @@ export default function ContactManagement() {
               className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <Plus size={16} />
-              Add settings
+              Add contact
             </button>
           }
         />

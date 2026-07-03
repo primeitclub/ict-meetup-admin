@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Save, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import FormSelect from "../../../components/form-field/input-select/SelectController";
 import FormInput from "../../../components/form-field/input-field/InputController";
@@ -46,7 +46,7 @@ export default function FaqsForm() {
     formState: { errors },
   } = methods;
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove, replace, move } = useFieldArray({
     control,
     name: "faqs",
   });
@@ -60,9 +60,13 @@ export default function FaqsForm() {
   useEffect(() => {
     if (!isEdit || !data?.data) return;
     const items = data.data.items ?? [];
+    // Defense in depth: sort by the persisted `order` client-side too, in case
+    // the API response isn't already ordered. This is the same key the
+    // backend now uses to sort, so it must stay consistent with it.
+    const sorted = [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     replace(
-      items.length
-        ? items.map((f) => ({
+      sorted.length
+        ? sorted.map((f) => ({
             id: f.id,
             title: f.title,
             description: f.description,
@@ -179,16 +183,38 @@ export default function FaqsForm() {
                     <Text size="sm" variant="muted">
                       FAQ #{index + 1}
                     </Text>
-                    {fields.length > 1 && (
+                    <div className="flex items-center gap-3">
                       <button
                         type="button"
-                        onClick={() => remove(index)}
-                        className="inline-flex items-center gap-1 text-sm text-red-500 hover:text-red-600 transition-colors"
+                        onClick={() => move(index, index - 1)}
+                        disabled={index === 0}
+                        title="Move up"
+                        aria-label="Move FAQ up"
+                        className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        <Trash2 size={14} />
-                        Remove
+                        <ArrowUp size={14} />
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => move(index, index + 1)}
+                        disabled={index === fields.length - 1}
+                        title="Move down"
+                        aria-label="Move FAQ down"
+                        className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ArrowDown size={14} />
+                      </button>
+                      {fields.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="inline-flex items-center gap-1 text-sm text-red-500 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <FormInput
