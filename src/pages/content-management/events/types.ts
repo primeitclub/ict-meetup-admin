@@ -1,5 +1,3 @@
-import type { FlagshipEventVersion } from "../../../types/version";
-
 export type EventFeeType = "free" | "paid";
 
 export enum EventStatus {
@@ -24,7 +22,13 @@ export interface EventItem {
   categoryId: string;
   versionId: string;
   /** Populated version relation (when the API includes it on GET). */
-  flagshipEventVersion?: FlagshipEventVersion;
+  flagshipEvent?: {
+    id: string;
+    version_name: string;
+    version_number: number;
+    is_current: boolean;
+    status: string;
+  };
   speakerId: string;
   totalSeats: number;
   feeType: EventFeeType;

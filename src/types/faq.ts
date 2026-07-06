@@ -3,6 +3,7 @@ export interface Faq {
   versionId: string;
   title: string;
   description: string;
+  order: number;
   createdAt: string;
   updatedAt: string;
 }

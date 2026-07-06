@@ -1,18 +1,20 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
 import FormSelect from "../../components/form-field/input-select/SelectController";
+import { useApiMutation } from "../../lib/use-api-mutation";
+import { useApiQuery } from "../../lib";
 import Divider from "../../shared/design-components/divider/Divider";
 import { Text } from "../../shared/design-components";
+import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
-import SettingsVersionBar from "./SettingsVersionBar";
-import { SOCIAL_PLATFORMS, type SocialPlatform, type Settings } from "../../types/settings";
-import { useApiQuery } from "../../lib";
 import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft } from "lucide-react";
+import type { Settings } from "../../types/settings";
+import { SOCIAL_PLATFORMS, type SocialPlatform } from "../../types/settings";
 
 interface SocialFormValues {
   links: { platform: SocialPlatform | ""; link: string }[];
@@ -27,12 +29,11 @@ const urlRule = {
 
 export default function SocialMediaProfile() {
   const {
-    versionOptions,
     selectedVersionId,
     setVersion,
     settings,
     exists,
-    isArchived,
+    isDraft,
     refetchSettings,
   } = useSettingsForVersion();
 
@@ -60,27 +61,11 @@ export default function SocialMediaProfile() {
         cell: ({ row }) => row.index + 1,
       },
       {
-        header: "Version",
-        accessorKey: "flagshipEventVersion.version_number",
-        cell: ({ row }) => {
-          const version = row.original.flagshipEventVersion;
-          if (!version) return <span className="text-muted-foreground">—</span>;
-          return (
-            <div>
-              {version.version_number}
-              {version.is_current && (
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        header: "Social Profiles",
+        header: "Social Links",
         cell: ({ row }) => {
           const links = row.original.socialMediaLinks;
           if (!links || links.length === 0) return "—";
-          return links.map(l => l.platform).join(", ");
+          return links.map((l: { platform: string }) => l.platform).join(", ");
         },
       },
       {
@@ -99,24 +84,32 @@ export default function SocialMediaProfile() {
     [setVersion]
   );
 
-  // Populate the form with existing settings so the user can update them.
+  // Pre-fill form when editing existing settings
   useEffect(() => {
     if (settings) {
-      reset({
-        links: settings.socialMediaLinks || [],
-      });
+      reset({ links: settings.socialMediaLinks || [] });
     } else {
       reset({ links: [] });
     }
   }, [settings, reset, selectedVersionId]);
 
-
-
-
   const { save, isSaving } = useSaveSettings({
     exists,
     settingsId: settings?.id,
     onSaved: refetchSettings,
+  });
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { execute: deleteSettings, isLoading: isDeleting } = useApiMutation(
+    "settingDetail",
+  )<void, never>({
+    method: "DELETE",
+    invalidateRoutes: ["settings"],
+    onSuccess: () => {
+      toast.success("Settings deleted");
+      refetchSettings();
+    },
+    onError: (err) => toast.error(err.message || "Failed to delete settings"),
   });
 
   const onSubmit = async (data: SocialFormValues) => {
@@ -125,14 +118,18 @@ export default function SocialMediaProfile() {
       .map((l) => ({ platform: l.platform, link: l.link.trim() }));
 
     await save(selectedVersionId, (fd) => {
-      // Multipart → send the array as a JSON string; the server parses it.
       fd.append("socialMediaLinks", JSON.stringify(links));
     });
-
-    // Clear the form inputs immediately after submit.
-    reset({ links: [] });
   };
 
+  const handleConfirmDelete = async () => {
+    if (!settings?.id) return;
+    try {
+      await deleteSettings(undefined, { pathParams: { id: settings.id } });
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
 
   if (!isFormOpen) {
     return (
@@ -144,14 +141,11 @@ export default function SocialMediaProfile() {
           searchPlaceholder="Search social media..."
           actionRight={
             <button
-              onClick={() => {
-                setVersion(versionOptions[0]?.value);
-                setIsFormOpen(true);
-              }}
+              onClick={() => setIsFormOpen(true)}
               className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <Plus size={16} />
-              Add settings
+              Add social media
             </button>
           }
         />
@@ -173,17 +167,7 @@ export default function SocialMediaProfile() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h2 className="text-lg font-medium">Add/Edit Social Media Profile</h2>
-      </div>
-      <div className="p-6">
-        <SettingsVersionBar
-          title="Social Media Profile"
-          description="Links shown for this version. Allowed platforms: Facebook, Instagram, LinkedIn, Twitter, TikTok."
-          versionOptions={versionOptions}
-          selectedVersionId={selectedVersionId}
-          onVersionChange={(v) => setVersion(v)}
-          isArchived={isArchived}
-        />
+        <h2 className="text-lg font-medium">Add/Edit Social Media Links</h2>
       </div>
 
       <Divider />
@@ -235,33 +219,45 @@ export default function SocialMediaProfile() {
             </button>
           </div>
 
-          {/* Current values (saved) */}
-          <div className="mt-6">
-            <Divider />
-            <div className="pt-4 space-y-3">
-              <Text size="sm" variant="muted">Current values for this version</Text>
-
-              {(settings?.socialMediaLinks?.length ?? 0) === 0 ? (
-                <Text size="sm" variant="muted">No social links saved yet.</Text>
-              ) : (
-                <div className="space-y-3">
-                  {settings?.socialMediaLinks?.map((l, idx) => (
-                    <div key={`${l.platform}-${idx}`} className="rounded-lg border border-border p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <Text size="sm" className="font-medium">{l.platform}</Text>
-                        <Text size="xs" variant="muted">{l.link}</Text>
-                      </div>
-                    </div>
+          {/* Current saved values */}
+          {settings?.socialMediaLinks && settings.socialMediaLinks.length > 0 && (
+            <div className="px-6 pb-4">
+              <Divider />
+              <div className="pt-4 space-y-2">
+                <Text size="sm" variant="muted">Current saved links</Text>
+                <div className="flex flex-wrap gap-2">
+                  {settings.socialMediaLinks.map((l: { platform: string; link: string }, i: number) => (
+                    <a
+                      key={i}
+                      href={l.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:border-accent transition-colors"
+                    >
+                      {l.platform}
+                    </a>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-border bg-surface px-6 py-4">
+            <div>
+              {exists && isDraft && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash2 size={16} />
+                  Delete settings
+                </button>
               )}
             </div>
-          </div>
-
-          <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">
             <button
               type="submit"
-              disabled={isSaving || isArchived || !selectedVersionId}
+              disabled={isSaving || !selectedVersionId}
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? (
@@ -275,6 +271,16 @@ export default function SocialMediaProfile() {
         </form>
       </FormProvider>
 
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete settings?"
+        description="This permanently deletes the social media links for this version. Only allowed while the version is a draft."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

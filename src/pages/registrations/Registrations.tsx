@@ -113,9 +113,12 @@ export default function Registrations() {
         id: "payment",
         header: "Payment",
         cell: ({ row }) => {
+          const selectedEvent = events.find((e) => e.id === selectedEventId);
           const val = row.original.attachedPaymentScreenshot;
+          if (selectedEvent?.feeType === "free" || val === "free") {
+            return <span className="text-xs font-medium text-emerald-600">Free</span>;
+          }
           if (!val) return <span className="text-muted-foreground text-xs">—</span>;
-          if (val === "free") return <span className="text-xs font-medium text-emerald-600">Free</span>;
           return (
             <button
               onClick={() => setPreviewUrl(val)}
@@ -190,7 +193,7 @@ export default function Registrations() {
         },
       },
     ],
-    [handleStatusChange, setPreviewUrl],
+    [handleStatusChange, setPreviewUrl, events, selectedEventId],
   );
 
   const items = data?.data?.items ?? [];
