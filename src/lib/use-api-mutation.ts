@@ -169,16 +169,20 @@ export function useApiMutation<K extends ApiRouteKey>(
 
           setData(result);
           setIsSuccess(true);
-          onSuccess?.(result);
 
-          // Invalidate related queries so they refetch with fresh data
+          // Invalidate BEFORE calling onSuccess so the cache is already stale
+          // by the time navigation happens (onSuccess typically calls navigate).
           if (invalidateRoutes?.length) {
-            for (const routeKey of invalidateRoutes) {
-              await queryClient.invalidateQueries({
-                queryKey: [API_ROUTES[routeKey]],
-              });
-            }
+            await Promise.all(
+              invalidateRoutes.map((routeKey) =>
+                queryClient.invalidateQueries({
+                  queryKey: [API_ROUTES[routeKey]],
+                }),
+              ),
+            );
           }
+
+          onSuccess?.(result);
 
           return result;
         } catch (err) {

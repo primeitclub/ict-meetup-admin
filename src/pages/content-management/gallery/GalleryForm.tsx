@@ -92,6 +92,7 @@ export default function GalleryForm() {
     "gallery",
   )<{ data: GalleryItem }, FormData>({
     method: "POST",
+    invalidateRoutes: ["gallery", "galleryByVersion"],
     onSuccess: () => {
       toast.success("Gallery created successfully");
       navigate(LIST_PATH);

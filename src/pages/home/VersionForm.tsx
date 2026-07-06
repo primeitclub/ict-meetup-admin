@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import { Save } from "lucide-react";
@@ -84,10 +84,40 @@ export default function VersionForm() {
     setValue("slug", createSlug(versionName), { shouldDirty: false });
   }, [versionName, isEdit, slugDirty, setValue]);
 
+  // Sync is_current ↔ status:
+  // Checking "Mark as current" promotes status to Active.
+  // Unchecking sets status to Draft (unless it's already Archived).
+  // Switching status to Active auto-checks the box; leaving Active unchecks it.
+  const isCurrent = watch("is_current");
+  const status = watch("status");
+
+  const prevIsCurrentRef = useRef(isCurrent);
+  const prevStatusRef = useRef(status);
+
+  useEffect(() => {
+    const prevIsCurrent = prevIsCurrentRef.current;
+    const prevStatus = prevStatusRef.current;
+    prevIsCurrentRef.current = isCurrent;
+    prevStatusRef.current = status;
+
+    if (isCurrent !== prevIsCurrent) {
+      // Checkbox changed — drive status
+      if (isCurrent) {
+        setValue("status", EventVersionStatus.ACTIVE, { shouldDirty: true });
+      } else if (status === EventVersionStatus.ACTIVE) {
+        setValue("status", EventVersionStatus.DRAFT, { shouldDirty: true });
+      }
+    } else if (status !== prevStatus) {
+      // Status changed — drive checkbox
+      setValue("is_current", status === EventVersionStatus.ACTIVE, { shouldDirty: true });
+    }
+  }, [isCurrent, status, setValue]);
+
   const { execute: createVersion, isLoading: isCreating } = useApiMutation(
     "versions",
   )<FlagshipEventVersion, FormData>({
     method: "POST",
+    invalidateRoutes: ["versions"],
     onSuccess: () => {
       toast.success("Version created successfully");
       navigate("/home/versions");
@@ -100,6 +130,7 @@ export default function VersionForm() {
   )<FlagshipEventVersion, FormData>({
     method: "PATCH",
     pathParams: { id: id as string },
+    invalidateRoutes: ["versions", "versionDetail"],
     onSuccess: () => {
       toast.success("Version updated successfully");
       navigate("/home/versions");

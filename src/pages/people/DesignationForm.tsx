@@ -53,6 +53,7 @@ export default function DesignationForm() {
     "designations",
   )<Designation, DesignationPayload>({
     method: "POST",
+    invalidateRoutes: ["designations"],
     onSuccess: () => {
       toast.success("Designation created successfully");
       navigate(LIST_PATH);
@@ -66,6 +67,7 @@ export default function DesignationForm() {
   )<Designation, DesignationPayload>({
     method: "PATCH",
     pathParams: { id: id as string },
+    invalidateRoutes: ["designations", "designationDetail"],
     onSuccess: () => {
       toast.success("Designation updated successfully");
       navigate(LIST_PATH);

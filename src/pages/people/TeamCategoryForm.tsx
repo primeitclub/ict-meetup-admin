@@ -58,6 +58,7 @@ export default function TeamCategoryForm() {
     "teamCategories",
   )<TeamCategory, TeamCategoryPayload>({
     method: "POST",
+    invalidateRoutes: ["teamCategories"],
     onSuccess: () => {
       toast.success("Category created successfully");
       navigate(LIST_PATH);
@@ -70,6 +71,7 @@ export default function TeamCategoryForm() {
   )<TeamCategory, TeamCategoryPayload>({
     method: "PATCH",
     pathParams: { id: id as string },
+    invalidateRoutes: ["teamCategories", "teamCategoryDetail"],
     onSuccess: () => {
       toast.success("Category updated successfully");
       navigate(LIST_PATH);

@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle2, XCircle, Image as ImageIcon } from "lucide-react";
+import { CheckCircle2, XCircle, X } from "lucide-react";
 import toast from "react-hot-toast";
 import Table from "../../components/table/Table";
 import { useApiQuery } from "../../lib";
@@ -25,6 +25,7 @@ export default function Registrations() {
   const [selectedVersionId, setSelectedVersionId] = useState("");
   const [selectedEventId, setSelectedEventId] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { data: eventsData, isLoading: eventsLoading } = useApiQuery(
     "events",
@@ -111,20 +112,19 @@ export default function Registrations() {
       {
         id: "payment",
         header: "Payment",
-        cell: ({ row }) =>
-          row.original.attachedPaymentScreenshot ? (
-            <a
-              href={row.original.attachedPaymentScreenshot}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
+        cell: ({ row }) => {
+          const val = row.original.attachedPaymentScreenshot;
+          if (!val) return <span className="text-muted-foreground text-xs">—</span>;
+          if (val === "free") return <span className="text-xs font-medium text-emerald-600">Free</span>;
+          return (
+            <button
+              onClick={() => setPreviewUrl(val)}
+              className="px-2 py-1 rounded text-xs font-medium text-accent bg-accent/10 hover:bg-accent/20 transition-colors"
             >
-              <ImageIcon size={12} />
               View
-            </a>
-          ) : (
-            <span className="text-muted-foreground text-xs">—</span>
-          ),
+            </button>
+          );
+        },
       },
       {
         accessorKey: "status",
@@ -190,7 +190,7 @@ export default function Registrations() {
         },
       },
     ],
-    [handleStatusChange],
+    [handleStatusChange, setPreviewUrl],
   );
 
   const items = data?.data?.items ?? [];
@@ -287,6 +287,30 @@ export default function Registrations() {
           onRefetch={refetch}
           searchPlaceholder="Search registrations…"
         />
+      )}
+
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div
+            className="relative max-w-2xl w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewUrl(null)}
+              className="absolute -top-3 -right-3 z-10 rounded-full bg-surface border border-border p-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={16} />
+            </button>
+            <img
+              src={previewUrl}
+              alt="Payment screenshot"
+              className="w-full rounded-lg shadow-2xl object-contain max-h-[80vh]"
+            />
+          </div>
+        </div>
       )}
 
       <ConfirmDialog

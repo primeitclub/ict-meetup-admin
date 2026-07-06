@@ -92,6 +92,7 @@ export default function SpeakersForm() {
     "speakers",
   )<Speaker, FormData>({
     method: "POST",
+    invalidateRoutes: ["speakers"],
     onSuccess: () => {
       toast.success("Speaker created successfully");
       navigate(LIST_PATH);
@@ -104,6 +105,7 @@ export default function SpeakersForm() {
   )<Speaker, FormData>({
     method: "PATCH",
     pathParams: { speakerId: id as string },
+    invalidateRoutes: ["speakers", "speakerDetail"],
     onSuccess: () => {
       toast.success("Speaker updated successfully");
       navigate(LIST_PATH);
