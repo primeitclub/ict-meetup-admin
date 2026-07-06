@@ -245,7 +245,9 @@ export default function EventsForm() {
 
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, String(value));
+      if (value !== "" && value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
     });
     if (imageFile) {
       formData.append("image", imageFile);

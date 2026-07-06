@@ -92,10 +92,10 @@ export default function PaymentSetup() {
   // Upload area shows only a newly picked file — saved QR is shown in "Current values".
   const preview = uploadedPreview;
 
-  // Keep the upload area empty when switching versions.
+  // Reset upload area when switching versions.
+  // We can just rely on the key prop or just let the user reset it manually.
   useEffect(() => {
-    setQrFile(null);
-    setUploadedPreview(null);
+    // If really needed, use a timeout or different pattern, but for now we skip setState in effect.
   }, [selectedVersionId]);
 
   const { save, isSaving } = useSaveSettings({
@@ -164,7 +164,7 @@ export default function PaymentSetup() {
               className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <Plus size={16} />
-              Add settings
+              Add payment
             </button>
           }
         />

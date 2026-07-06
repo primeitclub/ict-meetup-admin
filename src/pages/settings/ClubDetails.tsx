@@ -1,20 +1,18 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
 import { useApiMutation } from "../../lib/use-api-mutation";
+import { useApiQuery } from "../../lib";
 import Divider from "../../shared/design-components/divider/Divider";
-
+import { Text } from "../../shared/design-components";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import { useSettingsForVersion, useSaveSettings } from "./use-settings";
-import SettingsVersionBar from "./SettingsVersionBar";
-import { useApiQuery } from "../../lib";
 import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Settings } from "../../types/settings";
-import { Plus, ArrowLeft } from "lucide-react";
 
 interface ClubDetailsFormValues {
   clubEmail: string;
@@ -28,7 +26,6 @@ export default function ClubDetails() {
     setVersion,
     settings,
     exists,
-    isArchived,
     isDraft,
     refetchSettings,
   } = useSettingsForVersion();
@@ -56,29 +53,13 @@ export default function ClubDetails() {
         cell: ({ row }) => row.index + 1,
       },
       {
-        header: "Version",
-        accessorKey: "flagshipEventVersion.version_number",
-        cell: ({ row }) => {
-          const version = row.original.flagshipEventVersion;
-          if (!version) return <span className="text-muted-foreground">—</span>;
-          return (
-            <div>
-              {version.version_number}
-              {version.is_current && (
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
-              )}
-            </div>
-          );
-        },
-      },
-      {
         accessorKey: "clubEmail",
         header: "Club Email",
         cell: ({ row }) => row.original.clubEmail || "—",
       },
       {
         accessorKey: "clubPhoneNumber",
-        header: "Club Phone Number",
+        header: "Phone",
         cell: ({ row }) => row.original.clubPhoneNumber || "—",
       },
       {
@@ -97,7 +78,7 @@ export default function ClubDetails() {
     [setVersion]
   );
 
-  // Populate the form with existing settings so the user can update them.
+  // Pre-fill form with existing settings when editing
   useEffect(() => {
     if (settings) {
       reset({
@@ -105,16 +86,9 @@ export default function ClubDetails() {
         clubPhoneNumber: settings.clubPhoneNumber || "",
       });
     } else {
-      reset({
-        clubEmail: "",
-        clubPhoneNumber: "",
-      });
+      reset({ clubEmail: "", clubPhoneNumber: "" });
     }
   }, [settings, reset, selectedVersionId]);
-
-
-
-
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -140,14 +114,7 @@ export default function ClubDetails() {
       fd.append("clubEmail", data.clubEmail.trim());
       fd.append("clubPhoneNumber", data.clubPhoneNumber.trim());
     });
-
-    // Clear the form inputs immediately after submit.
-    reset({
-      clubEmail: "",
-      clubPhoneNumber: "",
-    });
   };
-
 
   const handleConfirmDelete = async () => {
     if (!settings?.id) return;
@@ -175,7 +142,7 @@ export default function ClubDetails() {
               className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <Plus size={16} />
-              Add settings
+              Add details
             </button>
           }
         />
@@ -198,16 +165,6 @@ export default function ClubDetails() {
           <ArrowLeft size={20} />
         </button>
         <h2 className="text-lg font-medium">Add/Edit Club Details</h2>
-      </div>
-      <div className="p-6">
-        <SettingsVersionBar
-          title="Club Details"
-          description="Email and phone number of the organizing club."
-          versionOptions={versionOptions}
-          selectedVersionId={selectedVersionId}
-          onVersionChange={(v) => setVersion(v)}
-          isArchived={isArchived}
-        />
       </div>
 
       <Divider />
@@ -239,32 +196,25 @@ export default function ClubDetails() {
             </div>
           </div>
 
-          {/* Current values (saved) */}
-          <div className="mt-6">
+          {/* Current saved values */}
+          <div className="px-6 pb-4">
             <Divider />
-            <div className="pt-4 space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Current values for this version
-              </p>
-
-
+            <div className="pt-4 space-y-2">
+              <Text size="sm" variant="muted">Current values for this version</Text>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="rounded-lg border border-border p-4 space-y-1">
-                  <p className="text-xs text-muted-foreground">Club Email</p>
-                  <p>{settings?.clubEmail ?? "—"}</p>
-
+                  <Text size="xs" variant="muted">Club Email</Text>
+                  <Text>{settings?.clubEmail ?? "—"}</Text>
                 </div>
                 <div className="rounded-lg border border-border p-4 space-y-1">
-                  <p className="text-xs text-muted-foreground">Club Phone Number</p>
-                  <p>{settings?.clubPhoneNumber ?? "—"}</p>
-
+                  <Text size="xs" variant="muted">Club Phone</Text>
+                  <Text>{settings?.clubPhoneNumber ?? "—"}</Text>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-border bg-surface px-6 py-4">
-
             <div>
               {exists && isDraft && (
                 <button
@@ -279,7 +229,7 @@ export default function ClubDetails() {
             </div>
             <button
               type="submit"
-              disabled={isSaving || isArchived || !selectedVersionId}
+              disabled={isSaving || !selectedVersionId}
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? (
@@ -293,12 +243,11 @@ export default function ClubDetails() {
         </form>
       </FormProvider>
 
-
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Delete settings?"
-        description="This permanently deletes this version's settings (contact, social links, and QR code). Only allowed while the version is a draft."
+        description="This permanently deletes this version's club details settings. Only allowed while the version is a draft."
         confirmLabel="Delete"
         variant="danger"
         isLoading={isDeleting}

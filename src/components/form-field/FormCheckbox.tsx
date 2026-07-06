@@ -29,7 +29,6 @@ export default function FormCheckbox({
     <div className="flex items-center space-x-2">
       <Checkbox.Root
         id={checkboxId}
-        ref={field.ref}
         checked={Boolean(field.value)}
         onCheckedChange={(checked) => field.onChange(checked === true)}
         onBlur={field.onBlur}

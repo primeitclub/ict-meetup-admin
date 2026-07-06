@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
+import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { Plus, Save, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
-// import FormSelect from "../../components/form-field/input-select/SelectController";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import { useApiQuery } from "../../lib";
 import Divider from "../../shared/design-components/divider/Divider";
@@ -26,7 +25,6 @@ interface ContactDepartment {
   department: string;
   contacts: ContactPerson[];
 }
-import type { TeamMember } from "../../types/team";
 
 interface ContactFormValues {
   email: string;
@@ -145,12 +143,6 @@ export default function ContactManagement() {
     }
   }, [settings, reset, selectedVersionId]);
 
-  const { data: teamsData } = useApiQuery("teams")<{
-    data: { items: TeamMember[] };
-  }>({
-    queryParams: { versionId: selectedVersionId ?? "", limit: 100 },
-    enabled: !!selectedVersionId,
-  });
 
   const { save, isSaving } = useSaveSettings({
     exists,
@@ -210,7 +202,7 @@ export default function ContactManagement() {
               className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             >
               <Plus size={16} />
-              Add settings
+              Add contact
             </button>
           }
         />
@@ -289,7 +281,6 @@ export default function ContactManagement() {
                   key={deptField.id}
                   control={control}
                   deptIndex={deptIndex}
-                  allMembers={teamsData?.data?.items ?? []}
                   onRemoveDept={() => removeDept(deptIndex)}
                 />
               ))}
@@ -425,72 +416,27 @@ export default function ContactManagement() {
 function DeptBlock({
   control,
   deptIndex,
-  allMembers,
   onRemoveDept,
 }: {
   control: ReturnType<typeof useForm<ContactFormValues>>["control"];
   deptIndex: number;
-  allMembers: TeamMember[];
   onRemoveDept: () => void;
 }) {
-  const { setValue } = useFormContext<ContactFormValues>();
-
-  const { fields: contactFields, append: appendContact, remove: removeContact, replace: replaceContacts } = useFieldArray({
+  const { fields: contactFields, append: appendContact, remove: removeContact } = useFieldArray({
     control,
     name: `contactDepartments.${deptIndex}.contacts`,
   });
 
-  const selectedDesignation = useWatch({
-    control,
-    name: `contactDepartments.${deptIndex}.department`,
-  });
-
-  const designationOptions = useMemo(() => {
-    const seen = new Set<string>();
-    return allMembers
-      .filter((m) => m.designation?.name && !seen.has(m.designation.name) && seen.add(m.designation.name))
-      .map((m) => ({ value: m.designation!.name, label: m.designation!.name }));
-  }, [allMembers]);
-
-  const membersOfDesignation = useMemo(
-    () => allMembers.filter((m) => m.designation?.name === selectedDesignation),
-    [allMembers, selectedDesignation],
-  );
-
-  const handleDesignationChange = (designation: string) => {
-    setValue(`contactDepartments.${deptIndex}.department`, designation);
-    const members = allMembers.filter((m) => m.designation?.name === designation);
-    replaceContacts(members.map((m) => ({ name: m.name, phone: "" })));
-  };
-
   return (
     <div className="rounded-lg border border-border p-4 space-y-4">
-      {/* Designation dropdown + remove button */}
+      {/* Department name input + remove button */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
-        <div className="space-y-1 w-full">
-          <label className="text-sm font-medium text-foreground">
-            Designation <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={selectedDesignation || ""}
-            onChange={(e) => handleDesignationChange(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            <option value="">Select a designation…</option>
-            {designationOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-muted-foreground">
-            {membersOfDesignation.length > 0
-              ? `${membersOfDesignation.length} member(s) will appear below`
-              : selectedDesignation
-                ? "No members found for this designation"
-                : ""}
-          </p>
-        </div>
+        <FormInput
+          name={`contactDepartments.${deptIndex}.department`}
+          label="Department / Designation"
+          placeholder="e.g. Technical Committee"
+          rules={{ required: "Department name is required" }}
+        />
         <button
           type="button"
           onClick={onRemoveDept}
@@ -501,16 +447,11 @@ function DeptBlock({
         </button>
       </div>
 
-      {/* Contact persons — names pre-filled from designation, phone editable */}
+      {/* Contact persons */}
       <div className="space-y-3">
-        {contactFields.length === 0 && selectedDesignation && (
+        {contactFields.length === 0 && (
           <Text size="sm" variant="muted">
-            No members for this designation yet.
-          </Text>
-        )}
-        {contactFields.length === 0 && !selectedDesignation && (
-          <Text size="sm" variant="muted">
-            Select a designation above to load members.
+            No contacts yet. Add one below.
           </Text>
         )}
 
@@ -548,7 +489,7 @@ function DeptBlock({
           className="inline-flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-accent hover:text-foreground transition-colors"
         >
           <Plus size={14} />
-          Add contact manually
+          Add contact
         </button>
       </div>
     </div>
