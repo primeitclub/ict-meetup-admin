@@ -24,7 +24,7 @@
  * });
  */
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ictClient, ApiError } from "./api-client";
 import { API_ROUTES, type ApiRoutes, type ApiRouteKey } from "./api-routes";
@@ -113,6 +113,15 @@ export function useApiMutation<K extends ApiRouteKey>(
     const [isError, setIsError] = useState(false);
     const [error, setError] = useState<ApiError | null>(null);
 
+    // Keep refs current so execute always calls the latest callbacks
+    // even though execute itself is memoised with a stable deps array.
+    const onSuccessRef = useRef(onSuccess);
+    const onErrorRef = useRef(onError);
+    const invalidateRoutesRef = useRef(invalidateRoutes);
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+    invalidateRoutesRef.current = invalidateRoutes;
+
     const pathTemplate = API_ROUTES[route];
 
     const pathParamsKey = JSON.stringify(pathParams);
@@ -172,9 +181,9 @@ export function useApiMutation<K extends ApiRouteKey>(
 
           // Invalidate BEFORE calling onSuccess so the cache is already stale
           // by the time navigation happens (onSuccess typically calls navigate).
-          if (invalidateRoutes?.length) {
+          if (invalidateRoutesRef.current?.length) {
             await Promise.all(
-              invalidateRoutes.map((routeKey) =>
+              invalidateRoutesRef.current.map((routeKey) =>
                 queryClient.invalidateQueries({
                   queryKey: [API_ROUTES[routeKey]],
                 }),
@@ -182,7 +191,7 @@ export function useApiMutation<K extends ApiRouteKey>(
             );
           }
 
-          onSuccess?.(result);
+          onSuccessRef.current?.(result);
 
           return result;
         } catch (err) {
@@ -193,7 +202,7 @@ export function useApiMutation<K extends ApiRouteKey>(
 
           setIsError(true);
           setError(apiError);
-          onError?.(apiError);
+          onErrorRef.current?.(apiError);
           throw apiError;
         } finally {
           setIsLoading(false);

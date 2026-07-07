@@ -6,16 +6,22 @@ import Table from "../../../components/table/Table";
 import TableRowActions from "../../../components/table/TableRowActions";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
+import { useVersionFilter } from "../../../lib/hooks/use-version-filter";
+import VersionSelectFilter from "../../../components/VersionSelectFilter";
 import type { HeroSection } from "./types";
 import toast from "react-hot-toast";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 
 export default function Hero() {
   const navigate = useNavigate();
+  const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
+    useVersionFilter();
 
   const { data, isLoading, refetch } = useApiQuery("heroSections")<{
     data: { items: HeroSection[] };
-  }>();
+  }>({
+    queryParams: selectedVersionId ? { flagshipEventVersionId: selectedVersionId } : {},
+  });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -107,13 +113,21 @@ export default function Hero() {
         data={items}
         onRefetch={refetch}
         actionRight={
-          <button
-            onClick={() => navigate("add")}
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <Plus size={16} />
-            Add content
-          </button>
+          <div className="flex items-center gap-3">
+            <VersionSelectFilter
+              value={selectedVersionId}
+              onChange={setSelectedVersionId}
+              options={versionOptions}
+              isLoading={versionsLoading}
+            />
+            <button
+              onClick={() => navigate("add")}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Plus size={16} />
+              Add content
+            </button>
+          </div>
         }
       />
       {isLoading && (

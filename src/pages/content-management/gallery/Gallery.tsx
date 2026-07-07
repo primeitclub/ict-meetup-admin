@@ -7,26 +7,27 @@ import Table from "../../../components/table/Table";
 import TableRowActions from "../../../components/table/TableRowActions";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
-import useGetVersions from "../../../lib/hooks/use-get-versions";
+import { useVersionFilter } from "../../../lib/hooks/use-version-filter";
+import VersionSelectFilter from "../../../components/VersionSelectFilter";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 import { normalizeGalleryImages, type GalleryItem } from "../../../types/gallery";
 
 export default function Gallery() {
   const navigate = useNavigate();
+  const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
+    useVersionFilter();
 
   const { data, isLoading, refetch } = useApiQuery("gallery")<{
     data: { items: GalleryItem[] };
   }>();
 
-  const { data: versionsData } = useGetVersions();
-
   const versionNameById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const v of versionsData?.data?.items ?? []) {
-      map.set(v.id, v.version_name);
+    for (const v of versionOptions) {
+      map.set(v.value, v.label);
     }
     return map;
-  }, [versionsData]);
+  }, [versionOptions]);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteVersionId, setDeleteVersionId] = useState<string | null>(null);
@@ -116,7 +117,10 @@ export default function Gallery() {
     [handleDelete, versionNameById],
   );
 
-  const items = data?.data?.items ?? [];
+  const allItems = data?.data?.items ?? [];
+  const items = selectedVersionId
+    ? allItems.filter((i) => i.flagshipEventVersionId === selectedVersionId)
+    : allItems;
 
   return (
     <div className="space-y-6">
@@ -126,13 +130,21 @@ export default function Gallery() {
         onRefetch={refetch}
         searchPlaceholder="Search gallery..."
         actionRight={
-          <button
-            onClick={() => navigate("add")}
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <Plus size={16} />
-            Add gallery item
-          </button>
+          <div className="flex items-center gap-3">
+            <VersionSelectFilter
+              value={selectedVersionId}
+              onChange={setSelectedVersionId}
+              options={versionOptions}
+              isLoading={versionsLoading}
+            />
+            <button
+              onClick={() => navigate("add")}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Plus size={16} />
+              Add gallery item
+            </button>
+          </div>
         }
       />
       {isLoading && (

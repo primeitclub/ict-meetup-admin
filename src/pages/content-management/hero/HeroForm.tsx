@@ -6,9 +6,9 @@ import FormInput from "../../../components/form-field/input-field/InputControlle
 import FormSelect from "../../../components/form-field/input-select/SelectController";
 import Textarea from "../../../components/form-field/Textarea";
 import useGetVersionOptions from "../../../lib/hooks/use-get-version-options";
-import useCreateHeroSection from "./use-create-hero-section";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
+import { ApiError } from "../../../lib/api-client";
 import type { HeroSection } from "./types";
 import toast from "react-hot-toast";
 import Divider from "../../../shared/design-components/divider/Divider";
@@ -27,22 +27,31 @@ export default function HeroForm() {
 
   const { options: versionOptions, isLoading: versionsLoading } =
     useGetVersionOptions();
-  const { execute: createHeroSection, isLoading: isCreating } =
-    useCreateHeroSection();
+  const { execute: createHeroSection, isLoading: isCreating } = useApiMutation(
+    "heroSections",
+  )<{ data: HeroSection }, { heading: string; paragraph: string; flagshipEventVersionId: string }>({
+    method: "POST",
+    invalidateRoutes: ["heroSections"],
+    onSuccess: () => {
+      toast.success("Hero section created successfully");
+      navigate(-1);
+    },
+    onError: (err: ApiError) =>
+      toast.error(err.message || "Failed to create hero section"),
+  });
+
   const { execute: updateHeroSection, isLoading: isUpdating } = useApiMutation(
     "heroSectionDetail",
-  )<
-    { data: HeroSection },
-    Omit<
-      HeroSection,
-      | "id"
-      | "createdAt"
-      | "updatedAt"
-      | "createdById"
-      | "modifiedById"
-      | "flagshipEventVersion"
-    >
-  >({ method: "PUT", invalidateRoutes: ["heroSections"] });
+  )<{ data: HeroSection }, { heading: string; paragraph: string; flagshipEventVersionId: string }>({
+    method: "PUT",
+    invalidateRoutes: ["heroSections", "heroSectionDetail"],
+    onSuccess: () => {
+      toast.success("Hero section updated successfully");
+      navigate(-1);
+    },
+    onError: (err: ApiError) =>
+      toast.error(err.message || "Failed to update hero section"),
+  });
 
   const { data: editData } = useApiQuery("heroSectionDetail")<{
     data: HeroSection;
@@ -86,21 +95,10 @@ export default function HeroForm() {
       flagshipEventVersionId: formData.flagship_versions,
     };
 
-    try {
-      if (isEditMode) {
-        await updateHeroSection(payload, { pathParams: { id } });
-        toast.success("Hero section updated successfully");
-      } else {
-        await createHeroSection(payload);
-        toast.success("Hero section created successfully");
-      }
-      navigate(-1);
-    } catch {
-      toast.error(
-        isEditMode
-          ? "Failed to update hero section"
-          : "Failed to create hero section",
-      );
+    if (isEditMode) {
+      await updateHeroSection(payload, { pathParams: { id } });
+    } else {
+      await createHeroSection(payload);
     }
   };
 

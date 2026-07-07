@@ -7,16 +7,23 @@ import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
+import { useVersionFilter } from "../../lib/hooks/use-version-filter";
+import VersionSelectFilter from "../../components/VersionSelectFilter";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import type { Sponsor } from "../../types/sponsor";
 
 export default function AllSponsors() {
   const navigate = useNavigate();
+  const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
+    useVersionFilter();
 
   const { data, isLoading, refetch } = useApiQuery("sponsors")<{
     data: { items: Sponsor[] };
   }>({
-    queryParams: { limit: 100 },
+    queryParams: {
+      limit: 100,
+      ...(selectedVersionId ? { versionId: selectedVersionId } : {}),
+    },
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -141,6 +148,12 @@ export default function AllSponsors() {
         searchPlaceholder="Search sponsors..."
         actionRight={
           <div className="flex items-center gap-2">
+            <VersionSelectFilter
+              value={selectedVersionId}
+              onChange={setSelectedVersionId}
+              options={versionOptions}
+              isLoading={versionsLoading}
+            />
             <button
               onClick={() => navigate("/sponsors/categories")}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-2 transition-colors"

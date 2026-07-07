@@ -20,15 +20,17 @@ export default function useGetVersionOptions({
 }: UseGetVersionOptionsArgs = {}) {
   const { data, isLoading } = useGetVersions();
 
-  const options = useMemo<VersionOption[]>(() => {
+  const { options, activeVersionId } = useMemo(() => {
     const items = data?.data.items ?? [];
     const filtered =
       status === null ? items : items.filter((item) => item.status === status);
-    return filtered.map((item) => ({
+    const opts: VersionOption[] = filtered.map((item) => ({
       label: item.version_name,
       value: item.id,
     }));
+    const active = items.find((item) => item.is_current)?.id ?? "";
+    return { options: opts, activeVersionId: active };
   }, [data, status]);
 
-  return { options, isLoading };
+  return { options, isLoading, activeVersionId };
 }

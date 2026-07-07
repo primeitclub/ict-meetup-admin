@@ -7,15 +7,21 @@ import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
+import { useVersionFilter } from "../../lib/hooks/use-version-filter";
+import VersionSelectFilter from "../../components/VersionSelectFilter";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import type { Speaker } from "../../types/speaker";
 
 export default function Speakers() {
   const navigate = useNavigate();
+  const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
+    useVersionFilter();
 
   const { data, isLoading, refetch } = useApiQuery("speakers")<{
     data: { items: Speaker[] };
-  }>();
+  }>({
+    queryParams: selectedVersionId ? { versionId: selectedVersionId } : {},
+  });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -102,13 +108,21 @@ export default function Speakers() {
         onRefetch={refetch}
         searchPlaceholder="Search speakers..."
         actionRight={
-          <button
-            onClick={() => navigate("add")}
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <Plus size={16} />
-            Add speaker
-          </button>
+          <div className="flex items-center gap-3">
+            <VersionSelectFilter
+              value={selectedVersionId}
+              onChange={setSelectedVersionId}
+              options={versionOptions}
+              isLoading={versionsLoading}
+            />
+            <button
+              onClick={() => navigate("add")}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Plus size={16} />
+              Add speaker
+            </button>
+          </div>
         }
       />
       {isLoading && (
