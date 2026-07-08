@@ -6,17 +6,22 @@ import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
-import useGetVersionOptions from "../../lib/hooks/use-get-version-options";
+import { useVersionFilter } from "../../lib/hooks/use-version-filter";
+import VersionSelectFilter from "../../components/VersionSelectFilter";
 import type { TeamMember, TeamCategory, Designation } from "../../types/team";
 import toast from "react-hot-toast";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 
 export default function Teams() {
   const navigate = useNavigate();
+  const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
+    useVersionFilter();
 
   const { data, isLoading, refetch } = useApiQuery("teams")<{
     data: { items: TeamMember[] };
-  }>();
+  }>({
+    queryParams: selectedVersionId ? { versionId: selectedVersionId } : {},
+  });
 
   // Lookup data so we can label ids even when the list omits nested relations.
   const { data: categoriesData } = useApiQuery("teamCategories")<{
@@ -25,7 +30,6 @@ export default function Teams() {
   const { data: designationsData } = useApiQuery("designations")<{
     data: { items: Designation[] };
   }>();
-  const { options: versionOptions } = useGetVersionOptions({ status: null });
 
   const categoryNameById = useMemo(
     () =>
@@ -143,6 +147,12 @@ export default function Teams() {
         searchPlaceholder="Search team members..."
         actionRight={
           <div className="flex items-center gap-2">
+            <VersionSelectFilter
+              value={selectedVersionId}
+              onChange={setSelectedVersionId}
+              options={versionOptions}
+              isLoading={versionsLoading}
+            />
             <button
               onClick={() => navigate("categories")}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-2 transition-colors"

@@ -131,6 +131,7 @@ export default function SponsorForm() {
     "sponsors",
   )<Sponsor, FormData>({
     method: "POST",
+    invalidateRoutes: ["sponsors"],
     onSuccess: () => {
       toast.success("Sponsor created successfully");
       navigate(LIST_PATH);
@@ -143,6 +144,7 @@ export default function SponsorForm() {
   )<Sponsor, FormData>({
     method: "PUT",
     pathParams: { sponsorId: id as string },
+    invalidateRoutes: ["sponsors", "sponsorDetail"],
     onSuccess: () => {
       toast.success("Sponsor updated successfully");
       navigate(LIST_PATH);

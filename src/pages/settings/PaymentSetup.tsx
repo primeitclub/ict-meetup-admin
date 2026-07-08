@@ -230,21 +230,22 @@ export default function PaymentSetup() {
           </Text>
         )}
 
-        {/* Current values (saved) */}
-        <div className="pt-2">
-          <Divider />
-          <div className="pt-4 space-y-2">
-            <Text size="sm" variant="muted">Current values for this version</Text>
-            {settings?.qrCodeUrl ? (
-              <div className="rounded-lg border border-border p-4 space-y-2">
-                <Text size="xs" variant="muted">Stored QR Code URL</Text>
-                <Text>{settings.qrCodeUrl}</Text>
+        {/* Current saved QR code preview */}
+        {settings?.qrCodeUrl && (
+          <div className="pt-2">
+            <Divider />
+            <div className="pt-4 space-y-2">
+              <Text size="sm" variant="muted">Saved QR Code</Text>
+              <div className="rounded-lg border border-border p-4 flex justify-center">
+                <img
+                  src={settings.qrCodeUrl}
+                  alt="Saved QR Code"
+                  className="h-40 w-40 object-contain rounded"
+                />
               </div>
-            ) : (
-              <Text size="sm" variant="muted">No QR code saved yet.</Text>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-surface px-6 py-4">

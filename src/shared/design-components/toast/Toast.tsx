@@ -2,20 +2,19 @@ import { Toaster } from "react-hot-toast";
 
 const Toast = () => (
   <Toaster
-    position="bottom-right"
+    position="top-center"
     toastOptions={{
-      duration: 4000,
+      duration: 5000,
       style: {
-        background: "#02111F",
-        color: "#fff",
-        border: "1px solid #1f2937",
         fontSize: "0.875rem",
       },
       success: {
-        iconTheme: { primary: "#22c55e", secondary: "#02111F" },
+        style: { background: "#16a34a", color: "#fff" },
+        iconTheme: { primary: "#fff", secondary: "#16a34a" },
       },
       error: {
-        iconTheme: { primary: "#ef4444", secondary: "#02111F" },
+        style: { background: "#dc2626", color: "#fff" },
+        iconTheme: { primary: "#fff", secondary: "#dc2626" },
       },
     }}
   />

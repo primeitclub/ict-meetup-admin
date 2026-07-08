@@ -11,7 +11,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "../hooks/use-auth";
-import Toast from "../shared/design-components/toast/Toast";
 import { Text } from "../shared/design-components";
 import Breadcrumb from "../components/navigation/Breadcrumb";
 import ThemeToggle from "../components/theme/ThemeToggle";
@@ -83,7 +82,6 @@ export default function AdminLayout() {
         </div>
       </aside>
       <main className="flex-1 flex flex-col min-h-0">
-        <Toast />
         <div className="shrink-0 flex items-center justify-between gap-4 px-6 py-4 border-b border-border">
           <Breadcrumb />
           <div className="flex items-center gap-2">

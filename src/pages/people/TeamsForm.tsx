@@ -123,6 +123,7 @@ export default function TeamsForm() {
     "teams",
   )<TeamMember, FormData>({
     method: "POST",
+    invalidateRoutes: ["teams"],
     onSuccess: () => {
       toast.success("Team member created successfully");
       navigate(LIST_PATH);
@@ -136,6 +137,7 @@ export default function TeamsForm() {
   )<TeamMember, FormData>({
     method: "PATCH",
     pathParams: { teamId: id as string },
+    invalidateRoutes: ["teams", "teamDetail"],
     onSuccess: () => {
       toast.success("Team member updated successfully");
       navigate(LIST_PATH);

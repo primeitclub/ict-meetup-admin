@@ -6,6 +6,8 @@ import Table from "../../../components/table/Table";
 import TableRowActions from "../../../components/table/TableRowActions";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
+import { useVersionFilter } from "../../../lib/hooks/use-version-filter";
+import VersionSelectFilter from "../../../components/VersionSelectFilter";
 import type { EventItem, EventStatus } from "./types";
 import toast from "react-hot-toast";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
@@ -18,10 +20,14 @@ const statusStyles: Record<EventStatus, string> = {
 
 export default function Events() {
   const navigate = useNavigate();
+  const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
+    useVersionFilter();
 
   const { data, isLoading, refetch } = useApiQuery("events")<{
     data: { items: EventItem[] };
-  }>();
+  }>({
+    queryParams: selectedVersionId ? { versionId: selectedVersionId } : {},
+  });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Event delete is version-scoped — the backend needs both id and versionId.
@@ -157,6 +163,12 @@ export default function Events() {
         searchPlaceholder="Search events..."
         actionRight={
           <div className="flex items-center gap-2">
+            <VersionSelectFilter
+              value={selectedVersionId}
+              onChange={setSelectedVersionId}
+              options={versionOptions}
+              isLoading={versionsLoading}
+            />
             <button
               onClick={() => navigate("categories")}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-2 transition-colors"

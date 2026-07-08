@@ -61,6 +61,7 @@ export default function CategoryForm() {
     "sponsorCategories",
   )<SponsorCategory, CategoryPayload>({
     method: "POST",
+    invalidateRoutes: ["sponsorCategories"],
     onSuccess: () => {
       toast.success("Category created successfully");
       navigate(LIST_PATH);
@@ -73,6 +74,7 @@ export default function CategoryForm() {
   )<SponsorCategory, CategoryPayload>({
     method: "PUT",
     pathParams: { categoryId: id as string },
+    invalidateRoutes: ["sponsorCategories", "sponsorCategoryDetail"],
     onSuccess: () => {
       toast.success("Category updated successfully");
       navigate(LIST_PATH);

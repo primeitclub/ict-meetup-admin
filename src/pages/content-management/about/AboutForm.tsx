@@ -69,6 +69,7 @@ export default function AboutForm() {
     "about",
   )<AboutSection, FormData>({
     method: "POST",
+    invalidateRoutes: ["about"],
     onSuccess: () => {
       toast.success("About section created successfully");
       navigate("/content-management/about");
@@ -82,6 +83,7 @@ export default function AboutForm() {
   )<AboutSection, FormData>({
     method: "PUT",
     pathParams: { id: id as string },
+    invalidateRoutes: ["about", "aboutDetail"],
     onSuccess: () => {
       toast.success("About section updated successfully");
       navigate("/content-management/about");

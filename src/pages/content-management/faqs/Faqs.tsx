@@ -7,6 +7,8 @@ import Table from "../../../components/table/Table";
 import TableRowActions from "../../../components/table/TableRowActions";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
+import { useVersionFilter } from "../../../lib/hooks/use-version-filter";
+import VersionSelectFilter from "../../../components/VersionSelectFilter";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 import type { FaqSyncPayload, GroupedFaqVersion } from "../../../types/faq";
 
@@ -18,6 +20,8 @@ const statusClasses: Record<string, string> = {
 
 export default function Faqs() {
   const navigate = useNavigate();
+  const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
+    useVersionFilter();
 
   // FAQs are grouped per version — each row is a version with its FAQ array.
   // Only versions that already have ≥1 FAQ appear here.
@@ -105,7 +109,10 @@ export default function Faqs() {
     [handleDelete],
   );
 
-  const items = data?.data?.items ?? [];
+  const allItems = data?.data?.items ?? [];
+  const items = selectedVersionId
+    ? allItems.filter((i) => i.versionId === selectedVersionId)
+    : allItems;
 
   return (
     <div className="space-y-6">
@@ -115,13 +122,21 @@ export default function Faqs() {
         onRefetch={refetch}
         searchPlaceholder="Search versions..."
         actionRight={
-          <button
-            onClick={() => navigate("add")}
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <Plus size={16} />
-            Add FAQ
-          </button>
+          <div className="flex items-center gap-3">
+            <VersionSelectFilter
+              value={selectedVersionId}
+              onChange={setSelectedVersionId}
+              options={versionOptions}
+              isLoading={versionsLoading}
+            />
+            <button
+              onClick={() => navigate("add")}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Plus size={16} />
+              Add FAQ
+            </button>
+          </div>
         }
       />
       {isLoading && (
