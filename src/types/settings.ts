@@ -26,23 +26,26 @@ export interface ContactDepartment {
   contacts: ContactPerson[];
 }
 
-/** Per-version contact / branding settings. At most one per version. */
+/** Per-version contact settings (Contact Management tab). At most one per version. */
 export interface Settings {
   id: string;
   versionId: string;
   email: string | null;
   phoneNumber: string | null;
-  teamName: string | null;
+  contactDepartments: ContactDepartment[] | null;
+  flagshipEventVersion?: FlagshipEventVersion;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Global, non-versioned club settings (Club Details, Social Media, Payment Setup tabs). Always at most one row. */
+export interface SiteSettings {
+  id: string;
   clubEmail: string | null;
   clubPhoneNumber: string | null;
   socialMediaLinks: SocialMediaLink[] | null;
-  contactDepartments: ContactDepartment[] | null;
   /** Cloudinary URL — use this to display the QR code. */
   qrCodeUrl: string | null;
-  /** Internal — ignore on the frontend. */
-  qrCodePath?: string | null;
-  qrCodeLocalPath?: string | null;
-  flagshipEventVersion?: FlagshipEventVersion;
   createdAt: string;
   updatedAt: string;
 }
