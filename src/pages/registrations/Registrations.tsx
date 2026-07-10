@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { CheckCircle2, XCircle, X } from "lucide-react";
 import toast from "react-hot-toast";
@@ -21,7 +21,9 @@ const statusStyles: Record<RegistrationStatus, string> = {
 };
 
 export default function Registrations() {
-  const { options: versionOptions } = useGetVersionOptions({ status: null });
+  const { options: versionOptions, activeVersionId } = useGetVersionOptions({
+    status: null,
+  });
   const [selectedVersionId, setSelectedVersionId] = useState("");
   const [selectedEventId, setSelectedEventId] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -35,6 +37,12 @@ export default function Registrations() {
     queryParams: { versionId: selectedVersionId, limit: 200 },
     enabled: !!selectedVersionId,
   });
+
+  useEffect(() => {
+    if (!selectedVersionId && activeVersionId) {
+      setSelectedVersionId(activeVersionId);
+    }
+  }, [activeVersionId, selectedVersionId]);
 
   const events = eventsData?.data?.items ?? [];
 
