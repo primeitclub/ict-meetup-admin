@@ -34,7 +34,7 @@ interface NewImage {
 export default function GalleryForm() {
   const navigate = useNavigate();
 
-  const { options: versionOptions, isLoading: versionsLoading } =
+  const { options: versionOptions, isLoading: versionsLoading, activeVersionId } =
     useGetVersionOptions({ status: null });
 
   const [newImages, setNewImages] = useState<NewImage[]>([]);
@@ -43,7 +43,14 @@ export default function GalleryForm() {
   const methods = useForm<GalleryFormValues>({
     defaultValues: { flagshipEventVersionId: "", link: "" },
   });
-  const { handleSubmit } = methods;
+  const { handleSubmit, setValue } = methods;
+
+  // Auto-select current version on mount
+  useEffect(() => {
+    if (activeVersionId) {
+      setValue("flagshipEventVersionId", activeVersionId);
+    }
+  }, [activeVersionId, setValue]);
 
   // Revoke object URLs on unmount to avoid leaks.
   useEffect(() => {

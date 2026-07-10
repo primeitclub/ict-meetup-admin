@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { Plus, Tags, ImageIcon } from "lucide-react";
+import { getImageUrl } from "../../utils/imageUtils";
 import toast from "react-hot-toast";
 import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
@@ -76,7 +77,7 @@ export default function AllSponsors() {
         cell: ({ row }) =>
           row.original.imageUrl ? (
             <img
-              src={row.original.imageUrl}
+              src={getImageUrl(row.original.imageUrl)}
               alt={row.original.name}
               className="h-10 w-10 rounded-md object-contain border border-border bg-white"
             />

@@ -45,7 +45,7 @@ export default function TeamsForm() {
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
   const [imageCleared, setImageCleared] = useState(false);
 
-  const { options: versionOptions, isLoading: versionsLoading } =
+  const { options: versionOptions, isLoading: versionsLoading, activeVersionId } =
     useGetVersionOptions();
 
   const { data: categoriesData, isLoading: categoriesLoading } = useApiQuery(
@@ -78,6 +78,7 @@ export default function TeamsForm() {
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = methods;
 
@@ -118,6 +119,13 @@ export default function TeamsForm() {
       });
     }
   }, [existingData, reset]);
+
+  // Auto-select current version on create
+  useEffect(() => {
+    if (!isEdit && activeVersionId) {
+      setValue("versionId", activeVersionId);
+    }
+  }, [isEdit, activeVersionId, setValue]);
 
   const { execute: createTeam, isLoading: isCreating } = useApiMutation(
     "teams",
@@ -322,7 +330,7 @@ export default function TeamsForm() {
               preview={imagePreview}
               onFileChange={handleImageChange}
               title="Drop your team member image here"
-              hint="SVG, PNG, or JPG · max 2 MB"
+              hint="SVG, PNG, or JPG · max 150 KB"
             />
           </div>
 

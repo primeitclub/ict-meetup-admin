@@ -2,6 +2,7 @@ import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { Upload, X } from "lucide-react";
 import { cn } from "../../shared/utils/cn";
 import FieldLabel from "./FieldLabel";
+import { getImageUrl } from "../../utils/imageUtils";
 
 interface FormFileUploadProps {
   name: string;
@@ -79,7 +80,7 @@ export default function FormFileUpload({
         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface">
           {preview ? (
             <img
-              src={preview}
+              src={getImageUrl(preview)}
               alt="Preview"
               className="h-full w-full object-contain"
             />

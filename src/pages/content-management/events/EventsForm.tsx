@@ -65,7 +65,7 @@ export default function EventsForm() {
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
   const [imageCleared, setImageCleared] = useState(false);
 
-  const { options: versionOptions, isLoading: versionsLoading } =
+  const { options: versionOptions, isLoading: versionsLoading, activeVersionId } =
     useGetVersionOptions();
 
   const { data: categoriesData, isLoading: categoriesLoading } = useApiQuery(
@@ -196,7 +196,7 @@ export default function EventsForm() {
         endTime: "",
         date: "",
         categoryId: "",
-        versionId: "",
+        versionId: activeVersionId || "",
         speakerId: "",
         totalSeats: "",
         feeType: "",
@@ -208,7 +208,7 @@ export default function EventsForm() {
         isHighlighted: false,
       });
     }
-  }, [isEdit, reset]);
+  }, [isEdit, reset, activeVersionId]);
 
   const { execute: createEvent, isLoading: isCreating } = useApiMutation(
     "events",
@@ -496,7 +496,7 @@ export default function EventsForm() {
               preview={imagePreview}
               onFileChange={handleImageChange}
               title="Drop your event image here"
-              hint="SVG, PNG, or JPG · max 2 MB"
+              hint="SVG, PNG, or JPG · max 150 KB"
             />
 
             <Divider />

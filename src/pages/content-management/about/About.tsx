@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../../utils/imageUtils";
 import { Plus, ImageIcon } from "lucide-react";
 import Table from "../../../components/table/Table";
 import TableRowActions from "../../../components/table/TableRowActions";
@@ -65,7 +66,7 @@ export default function About() {
         cell: ({ row }) =>
           row.original.imageUrl ? (
             <img
-              src={row.original.imageUrl}
+              src={getImageUrl(row.original.imageUrl)}
               alt={row.original.title}
               className="h-10 w-10 rounded-md object-cover border border-border"
             />

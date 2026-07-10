@@ -13,6 +13,7 @@ import {
   type GalleryItem,
 } from "../../../types/gallery";
 import Divider from "../../../shared/design-components/divider/Divider";
+import { getImageUrl } from "../../../utils/imageUtils";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 import { Text } from "../../../shared/design-components";
 import { cn } from "../../../shared/utils/cn";
@@ -32,7 +33,7 @@ function toEditorImages(images: GalleryImage[], seed: number): EditorImage[] {
   return images.map((img, i) => ({
     key: `existing-${seed}-${i}-${img.id}`,
     id: img.id,
-    url: img.cloudImageUrl,
+    url: getImageUrl(img.imagePath),
     link: img.link ?? "",
   }));
 }

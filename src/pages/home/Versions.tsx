@@ -11,6 +11,7 @@ import type { FlagshipEventVersion } from "../../types/version";
 import { EventVersionStatus } from "../../types/version";
 import toast from "react-hot-toast";
 import { statusColors } from "../../constants";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function Versions() {
   const { data, isLoading, refetch } = useApiQuery("versions")<{
@@ -60,7 +61,7 @@ export default function Versions() {
           <div className="flex items-center space-x-3">
             {info.row.original.logo ? (
               <img
-                src={info.row.original.logo}
+                src={getImageUrl(info.row.original.logo)}
                 alt={info.row.original.version_name}
                 className="w-8 h-8 rounded object-contain bg-gray-800"
               />

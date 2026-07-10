@@ -46,7 +46,7 @@ export default function SpeakersForm() {
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
   const [imageCleared, setImageCleared] = useState(false);
 
-  const { options: versionOptions, isLoading: versionsLoading } =
+  const { options: versionOptions, isLoading: versionsLoading, activeVersionId } =
     useGetVersionOptions();
 
   const { data: existingData, isLoading: isFetching } = useApiQuery(
@@ -69,7 +69,7 @@ export default function SpeakersForm() {
       portfolio: "",
     },
   });
-  const { handleSubmit, reset, register, formState: { errors } } = methods;
+  const { handleSubmit, reset, register, setValue, formState: { errors } } = methods;
 
   const imagePreview = imageCleared
     ? null
@@ -91,6 +91,13 @@ export default function SpeakersForm() {
       });
     }
   }, [existingData, reset]);
+
+  // Auto-select current version on create
+  useEffect(() => {
+    if (!isEdit && activeVersionId) {
+      setValue("versionId", activeVersionId);
+    }
+  }, [isEdit, activeVersionId, setValue]);
 
   const { execute: createSpeaker, isLoading: isCreating } = useApiMutation(
     "speakers",
@@ -281,7 +288,7 @@ export default function SpeakersForm() {
               preview={imagePreview}
               onFileChange={handleImageChange}
               title="Drop your speaker image here"
-              hint="SVG, PNG, or JPG · max 2 MB"
+              hint="SVG, PNG, or JPG · max 150 KB"
             />
           </div>
 

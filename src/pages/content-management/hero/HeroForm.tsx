@@ -25,7 +25,7 @@ export default function HeroForm() {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
 
-  const { options: versionOptions, isLoading: versionsLoading } =
+  const { options: versionOptions, isLoading: versionsLoading, activeVersionId } =
     useGetVersionOptions();
   const { execute: createHeroSection, isLoading: isCreating } = useApiMutation(
     "heroSections",
@@ -72,6 +72,7 @@ export default function HeroForm() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = methods;
 
@@ -85,6 +86,13 @@ export default function HeroForm() {
       });
     }
   }, [editData, reset]);
+
+  // Auto-select current version on create
+  useEffect(() => {
+    if (!isEditMode && activeVersionId) {
+      setValue("flagship_versions", activeVersionId);
+    }
+  }, [isEditMode, activeVersionId, setValue]);
 
   const isSubmitting = isCreating || isUpdating;
 

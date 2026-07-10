@@ -13,6 +13,7 @@ import TableRowActions from "../../components/table/TableRowActions";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Settings } from "../../types/settings";
 import { Plus, ArrowLeft } from "lucide-react";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function PaymentSetup() {
   const {
@@ -68,7 +69,7 @@ export default function PaymentSetup() {
           if (!url) return <span className="text-muted-foreground">—</span>;
           return (
             <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-surface-2 overflow-hidden">
-              <img src={url} alt="QR Code" className="h-full w-full object-cover" />
+              <img src={getImageUrl(url)} alt="QR Code" className="h-full w-full object-cover" />
             </div>
           );
         },
@@ -209,7 +210,7 @@ export default function PaymentSetup() {
           preview={preview}
           onFileChange={handleFileChange}
           title="Drop the QR code image here"
-          hint="SVG, PNG, or JPG · max 2 MB"
+          hint="SVG, PNG, or JPG · max 150 KB"
         />
 
         {exists && settings?.qrCodeUrl && (
@@ -238,7 +239,7 @@ export default function PaymentSetup() {
               <Text size="sm" variant="muted">Saved QR Code</Text>
               <div className="rounded-lg border border-border p-4 flex justify-center">
                 <img
-                  src={settings.qrCodeUrl}
+                  src={getImageUrl(settings.qrCodeUrl)}
                   alt="Saved QR Code"
                   className="h-40 w-40 object-contain rounded"
                 />

@@ -31,7 +31,7 @@ export default function AboutForm() {
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
   const [imageCleared, setImageCleared] = useState(false);
 
-  const { options: versionOptions, isLoading: versionsLoading } =
+  const { options: versionOptions, isLoading: versionsLoading, activeVersionId } =
     useGetVersionOptions();
 
   const { data: existingData, isLoading: isFetching } = useApiQuery(
@@ -48,7 +48,7 @@ export default function AboutForm() {
       versionId: "",
     },
   });
-  const { handleSubmit, reset } = methods;
+  const { handleSubmit, reset, setValue } = methods;
 
   const imagePreview = imageCleared
     ? null
@@ -64,6 +64,13 @@ export default function AboutForm() {
       });
     }
   }, [existingData, reset]);
+
+  // Auto-select current version on create
+  useEffect(() => {
+    if (!isEdit && activeVersionId) {
+      setValue("versionId", activeVersionId);
+    }
+  }, [isEdit, activeVersionId, setValue]);
 
   const { execute: createAbout, isLoading: isCreating } = useApiMutation(
     "about",
@@ -195,7 +202,7 @@ export default function AboutForm() {
               preview={imagePreview}
               onFileChange={handleImageChange}
               title="Drop your image here"
-              hint="SVG, PNG, or JPG · max 2 MB"
+              hint="SVG, PNG, or JPG · max 150 KB"
             />
           </div>
 
