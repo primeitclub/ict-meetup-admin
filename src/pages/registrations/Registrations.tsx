@@ -12,7 +12,7 @@ import {
   type EventRegistration,
 } from "../../types/registration";
 import type { EventItem } from "../content-management/events/types";
-import { useVersionFilter } from "../../lib/hooks/use-version-filter";
+import useGetVersionOptions from "../../lib/hooks/use-get-version-options";
 import { getImageUrl } from "../../utils/imageUtils";
 
 const statusStyles: Record<RegistrationStatus, string> = {
