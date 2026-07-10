@@ -66,10 +66,14 @@ export const API_ROUTES = {
   eventRegistrationStatus: "/event-registrations/${registrationId}/status",
 
   // ─── Settings ─────────────────────────────────────────────────────────────
-  // Unified per-version settings record (contact, social links, QR code).
+  // Per-version Contact Management record (email, phone, department contacts).
   settings: "/settings",
   settingDetail: "/settings/${id}",
-  settingQrCode: "/settings/${id}/qrcode",
+
+  // ─── Site Settings ────────────────────────────────────────────────────────
+  // Global, non-versioned record (club contact, social links, payment QR code).
+  siteSettings: "/site-settings",
+  siteSettingsQrCode: "/site-settings/qrcode",
 } as const;
 
 /**
