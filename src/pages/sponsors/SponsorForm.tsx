@@ -40,7 +40,7 @@ export default function SponsorForm() {
   const [imageCleared, setImageCleared] = useState(false);
 
   // Sponsors have no archive guard, so any version can receive them.
-  const { options: versionOptions, isLoading: versionsLoading } =
+  const { options: versionOptions, isLoading: versionsLoading, activeVersionId } =
     useGetVersionOptions({ status: null });
 
   const { data: categoriesData, isLoading: categoriesLoading } = useApiQuery(
@@ -109,6 +109,13 @@ export default function SponsorForm() {
       });
     }
   }, [existingData, reset]);
+
+  // Auto-select current version on create
+  useEffect(() => {
+    if (!isEdit && activeVersionId) {
+      setValue("versionId", activeVersionId);
+    }
+  }, [isEdit, activeVersionId, setValue]);
 
   // Auto-fill the next free display order for the picked category (create only,
   // and only until the user edits the field themselves).
@@ -291,7 +298,7 @@ export default function SponsorForm() {
               preview={imagePreview}
               onFileChange={handleImageChange}
               title="Drop the sponsor logo here"
-              hint="SVG, PNG, or JPG · max 2 MB"
+              hint="SVG, PNG, or JPG · max 150 KB"
             />
           </div>
 

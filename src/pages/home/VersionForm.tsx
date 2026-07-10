@@ -273,7 +273,7 @@ export default function VersionForm() {
                 preview={logoPreview}
                 onFileChange={handleLogoChange}
                 title="Drop your logo here"
-                hint="SVG, PNG, or JPG · max 2 MB · 512×512 recommended"
+                hint="SVG, PNG, or JPG · max 150 KB · 512×512 recommended"
               />
 
               <FormCheckbox

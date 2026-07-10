@@ -12,7 +12,8 @@ import {
   type EventRegistration,
 } from "../../types/registration";
 import type { EventItem } from "../content-management/events/types";
-import useGetVersionOptions from "../../lib/hooks/use-get-version-options";
+import { useVersionFilter } from "../../lib/hooks/use-version-filter";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const statusStyles: Record<RegistrationStatus, string> = {
   pending: "bg-yellow-500/15 text-yellow-600",
@@ -321,7 +322,7 @@ export default function Registrations() {
               <X size={16} />
             </button>
             <img
-              src={previewUrl}
+              src={getImageUrl(previewUrl)}
               alt="Payment screenshot"
               className="w-full rounded-lg shadow-2xl object-contain max-h-[80vh]"
             />

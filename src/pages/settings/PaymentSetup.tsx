@@ -4,6 +4,7 @@ import FormFileUpload from "../../components/form-field/FormFileUpload";
 import Divider from "../../shared/design-components/divider/Divider";
 import { Text } from "../../shared/design-components";
 import { useSiteSettings } from "./use-site-settings";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function PaymentSetup() {
   const { settings, exists, isLoading, save, isSaving, removeQrCode, isRemovingQrCode } =
@@ -11,6 +12,100 @@ export default function PaymentSetup() {
 
   const [qrFile, setQrFile] = useState<File | null>(null);
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const { data: allSettingsData, isLoading: isLoadingAll, refetch: refetchAll } = useApiQuery("settings")<{
+    data: { items: Settings[] };
+  }>({
+    enabled: !isFormOpen,
+  });
+
+  const tableData = allSettingsData?.data?.items ?? [];
+
+  const columns: ColumnDef<Settings>[] = useMemo(
+    () => [
+      {
+        id: "sn",
+        header: "S.N",
+        cell: ({ row }) => row.index + 1,
+      },
+      {
+        header: "Version",
+        accessorKey: "flagshipEventVersion.version_number",
+        cell: ({ row }) => {
+          const version = row.original.flagshipEventVersion;
+          if (!version) return <span className="text-muted-foreground">—</span>;
+          return (
+            <div>
+              {version.version_number}
+              {version.is_current && (
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full ml-2" />
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        header: "QR Code",
+        cell: ({ row }) => {
+          const url = row.original.qrCodeUrl;
+          if (!url) return <span className="text-muted-foreground">—</span>;
+          return (
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-surface-2 overflow-hidden">
+              <img src={getImageUrl(url)} alt="QR Code" className="h-full w-full object-cover" />
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <TableRowActions
+            onEdit={() => {
+              setVersion(row.original.versionId);
+              setIsFormOpen(true);
+            }}
+          />
+        ),
+      },
+    ],
+    [setVersion]
+  );
+
+  // Upload area shows only a newly picked file — saved QR is shown in "Current values".
+  const preview = uploadedPreview;
+
+  // Reset upload area when switching versions.
+  // We can just rely on the key prop or just let the user reset it manually.
+  useEffect(() => {
+    // If really needed, use a timeout or different pattern, but for now we skip setState in effect.
+  }, [selectedVersionId]);
+
+  const { save, isSaving } = useSaveSettings({
+    exists,
+    settingsId: settings?.id,
+    onSaved: () => {
+      setQrFile(null);
+      setUploadedPreview(null);
+      refetchSettings();
+    },
+  });
+
+  const { execute: removeQrCode, isLoading: isRemoving } = useApiMutation(
+    "settingQrCode",
+  )<{ data: unknown }, never>({
+    method: "DELETE",
+    invalidateRoutes: ["settings"],
+    onSuccess: () => {
+      toast.success("QR code removed");
+      setQrFile(null);
+      setUploadedPreview(null);
+      refetchSettings();
+    },
+    onError: (err) => toast.error(err.message || "Failed to remove QR code"),
+  });
 
   const handleFileChange = (file: File | null) => {
     if (file === null) {
@@ -62,7 +157,7 @@ export default function PaymentSetup() {
           preview={uploadedPreview}
           onFileChange={handleFileChange}
           title="Drop the QR code image here"
-          hint="SVG, PNG, or JPG · max 2 MB"
+          hint="SVG, PNG, or JPG · max 150 KB"
         />
 
         {exists && settings?.qrCodeUrl && (
@@ -84,7 +179,7 @@ export default function PaymentSetup() {
               <Text size="sm" variant="muted">Saved QR Code</Text>
               <div className="rounded-lg border border-border p-4 flex justify-center">
                 <img
-                  src={settings.qrCodeUrl}
+                  src={getImageUrl(settings.qrCodeUrl)}
                   alt="Saved QR Code"
                   className="h-40 w-40 object-contain rounded"
                 />

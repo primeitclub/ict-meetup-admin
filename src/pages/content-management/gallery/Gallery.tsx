@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { Plus, Image as ImageIcon } from "lucide-react";
+import { getImageUrl } from "../../../utils/imageUtils";
 import toast from "react-hot-toast";
 import Table from "../../../components/table/Table";
 import TableRowActions from "../../../components/table/TableRowActions";
@@ -74,7 +75,7 @@ export default function Gallery() {
           const images = normalizeGalleryImages(row.original);
           return images.length ? (
             <img
-              src={images[0].cloudImageUrl}
+              src={getImageUrl(images[0].imagePath)}
               alt="Gallery"
               className="h-10 w-10 rounded-md object-cover border border-border"
             />
