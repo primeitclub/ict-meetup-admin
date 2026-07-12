@@ -30,7 +30,7 @@ jobs:
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: ftp.primeitclub.com
+          server: 91.204.209.27
           username: ${{ secrets.FTP_DEV_USERNAME }}
           password: ${{ secrets.FTP_DEV_PASSWORD }}
           local-dir: ./dist/
