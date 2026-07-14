@@ -6,6 +6,11 @@ export enum EventStatus {
   ARCHIVED = "archived",
 }
 
+export enum EventType {
+  SINGLE = "SINGLE",
+  GROUP = "GROUP",
+}
+
 export interface EventItem {
   id: string;
   createdAt: string;
@@ -43,6 +48,8 @@ export interface EventItem {
   /** Full, displayable URL returned by the API — use this for previews/tables. */
   imageUrl: string | null;
   isHighlighted: boolean;
+  eventType: EventType;
+  maxParticipants: number | null;
 }
 
 export interface EventCategory {

@@ -19,6 +19,7 @@ import {
   type EventCategory,
   type EventFeeType,
   EventStatus,
+  EventType,
 } from "./types";
 import type { Speaker } from "../../../types/speaker";
 
@@ -43,6 +44,8 @@ interface EventFormValues {
   registrationDeadline: string;
   displayOrder: string;
   isHighlighted: boolean;
+  eventType: EventType | "";
+  maxParticipants: string;
 }
 
 const feeTypeOptions = [
@@ -54,6 +57,11 @@ const statusOptions = [
   { label: "Archived", value: EventStatus.ARCHIVED },
   { label: "Draft", value: EventStatus.DRAFT },
   { label: "Published", value: EventStatus.PUBLISHED },
+];
+
+const eventTypeOptions = [
+  { label: "Single", value: EventType.SINGLE },
+  { label: "Group", value: EventType.GROUP },
 ];
 
 export default function EventsForm() {
@@ -107,6 +115,8 @@ export default function EventsForm() {
       registrationDeadline: "",
       displayOrder: "",
       isHighlighted: false,
+      eventType: "",
+      maxParticipants: "",
     },
   });
   const {
@@ -122,6 +132,8 @@ export default function EventsForm() {
   const isPaid = watch("feeType") === "paid";
   const selectedVersionId = watch("versionId");
   const isHighlighted = watch("isHighlighted");
+  const selectedEventType = watch("eventType");
+  const isGroup = selectedEventType === EventType.GROUP;
 
   const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
     "speakers",
@@ -182,33 +194,19 @@ export default function EventsForm() {
           : "",
         displayOrder: ev.displayOrder?.toString() ?? "",
         isHighlighted: ev.isHighlighted ?? false,
+        eventType: ev.eventType ?? "",
+        maxParticipants: ev.maxParticipants?.toString() ?? "",
       });
     }
   }, [existingData, reset]);
 
+  // Auto-select the active version on create — without resetting other fields
+  // the user may have already filled in.
   useEffect(() => {
-    if (!isEdit) {
-      reset({
-        title: "",
-        subtitle: "",
-        description: "",
-        startTime: "",
-        endTime: "",
-        date: "",
-        categoryId: "",
-        versionId: activeVersionId || "",
-        speakerId: "",
-        totalSeats: "",
-        feeType: "",
-        fee: "",
-        location: "",
-        status: "",
-        registrationDeadline: "",
-        displayOrder: "",
-        isHighlighted: false,
-      });
+    if (!isEdit && activeVersionId) {
+      setValue("versionId", activeVersionId);
     }
-  }, [isEdit, reset, activeVersionId]);
+  }, [isEdit, activeVersionId, setValue]);
 
   const { execute: createEvent, isLoading: isCreating } = useApiMutation(
     "events",
@@ -424,6 +422,32 @@ export default function EventsForm() {
                 }}
                 isRequired
               />
+            </div>
+
+            <Divider />
+
+            {/* Event Type */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormSelect
+                name="eventType"
+                label="Event Type"
+                options={eventTypeOptions}
+                rules={{ required: "Event type is required" }}
+              />
+              {isGroup && (
+                <FormInput
+                  name="maxParticipants"
+                  label="Max Participants per Team"
+                  type="number"
+                  placeholder="e.g. 4"
+                  rules={{
+                    required: "Max participants is required for group events",
+                    min: { value: 1, message: "Must be at least 1" },
+                    max: { value: 20, message: "Cannot exceed 20 participants" },
+                  }}
+                  isRequired
+                />
+              )}
             </div>
 
             <Divider />
