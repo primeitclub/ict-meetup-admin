@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+}
+
+@layer base {
+  /* Theme tokens — RGB channels so Tailwind opacity modifiers work
+     (e.g. bg-surface/50). Light is the default; .dark overrides. */
+  :root {
+    --background: 237 237 237;
+    --surface: 255 255 255;
+    --surface-2: 243 244 246;
+    --foreground: 17 24 39;
+    --muted-foreground: 107 114 128;
+    --border: 229 231 235;
+    --accent: 53 113 240;
+    --accent-foreground: 255 255 255;
+  }
+
+  .dark {
+    --background: 1 6 10;
+    --surface: 17 20 27;
+    --surface-2: 2 17 31;
+    --foreground: 245 245 245;
+    --muted-foreground: 156 163 175;
+    --border: 31 41 55;
+    --accent: 53 113 240;
+    --accent-foreground: 255 255 255;
+  }
+
+  a {
+    @apply text-nav-default hover:text-nav-hover active:text-nav-active;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-btn-primary hover:bg-btn-primary-hover
+  }
+}
+
+/* React Datepicker — themed via tokens (light/dark) */
+.react-datepicker {
+  @apply bg-surface border border-border font-sans text-foreground rounded-lg shadow-2xl !important;
+}
+
+.react-datepicker__header {
+  @apply bg-surface-2 border-b border-border rounded-t-lg !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name,
+.react-datepicker-time__header {
+  @apply text-muted-foreground !important;
+}
+
+.react-datepicker__day {
+  @apply text-foreground hover:bg-accent/20 rounded-md !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  @apply bg-accent text-accent-foreground !important;
+}
+
+.react-datepicker__day--disabled {
+  @apply text-muted-foreground/50 !important;
+}
+
+/* Time picker — themed for dark mode */
+.react-datepicker__time-container {
+  @apply border-l border-border !important;
+}
+
+.react-datepicker__time-container .react-datepicker__time {
+  @apply bg-surface !important;
+}
+
+.react-datepicker__time-container .react-datepicker__time-box {
+  @apply bg-surface !important;
+}
+
+.react-datepicker__time-list-item {
+  @apply text-foreground hover:bg-accent/20 !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  @apply bg-accent text-accent-foreground hover:bg-accent !important;
+}
+
+.react-datepicker__time-list-item--disabled {
+  @apply text-muted-foreground/50 !important;
+}
+
+.react-datepicker__navigation-icon::before {
+  @apply border-muted-foreground !important;
+}
+
+.react-datepicker__triangle {
+  display: none !important;
+}
+
+/* react-datepicker wraps the input in .react-datepicker-wrapper, which is
+   inline-block by default and shrinks to content. Force both wrappers full
+   width so the input's w-full actually fills its field. */
+.react-datepicker-wrapper,
+.react-datepicker__input-container {
+  @apply block w-full;
+}
+
+.react-datepicker__input-container input {
+  @apply w-full;
+}
+
+/* TipTap rich-text placeholder — shown on the first empty paragraph. */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: rgb(var(--muted-foreground));
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

@@ -1,0 +1,227 @@
+/**
+ * Centralized mutation hook — for POST, PUT, PATCH, DELETE requests.
+ *
+ * Pairs with `useApiQuery` to cover all API interactions.
+ *
+ * @example
+ * // Create an event
+ * const { execute, isLoading } = useApiMutation("events")<Event, CreateEventPayload>({
+ *   method: "POST",
+ *   onSuccess: () => toast.success("Event created!"),
+ * });
+ * await execute({ title: "ICT Meetup 2026", date: "2026-05-01" });
+ *
+ * // Update a specific event
+ * const { execute } = useApiMutation("eventDetail")<Event, UpdateEventPayload>({
+ *   method: "PUT",
+ *   pathParams: { eventId: "42" },
+ * });
+ *
+ * // Delete
+ * const { execute } = useApiMutation("eventDetail")<void, never>({
+ *   method: "DELETE",
+ *   pathParams: { eventId: "42" },
+ * });
+ */
+
+import { useState, useCallback, useMemo, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ictClient, ApiError } from "./api-client";
+import { API_ROUTES, type ApiRoutes, type ApiRouteKey } from "./api-routes";
+import type { HasVariables, TemplateVariables } from "./types";
+
+// ─── Internal Helpers ─────────────────────────────────────────────────────────
+
+function interpolatePath(
+  template: string,
+  params?: Record<string, string>,
+): string {
+  if (!params) return template;
+  let result = template;
+  for (const [key, value] of Object.entries(params)) {
+    result = result.replaceAll(`\${${key}}`, value);
+  }
+  return result;
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type HttpMutationMethod = "POST" | "PUT" | "PATCH" | "DELETE";
+
+type PathParamsArg<K extends ApiRouteKey> =
+  HasVariables<ApiRoutes[K]> extends true
+    ? { pathParams?: TemplateVariables<ApiRoutes[K]> }
+    : { pathParams?: never };
+
+type UseApiMutationArgs<T, K extends ApiRouteKey> = PathParamsArg<K> & {
+  method?: HttpMutationMethod;
+  onSuccess?: (data: T) => void;
+  onError?: (error: ApiError) => void;
+  /** Route keys to invalidate after a successful mutation (triggers refetch). */
+  invalidateRoutes?: ApiRouteKey[];
+};
+
+interface UseApiMutationResult<T, TPayload> {
+  execute: (
+    payload?: TPayload,
+    options?: {
+      pathParams?: Record<string, string>;
+      queryParams?: Record<string, unknown>;
+    },
+  ) => Promise<T>;
+  data: T | undefined;
+  isLoading: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+  error: ApiError | null;
+  reset: () => void;
+}
+
+// ─── Overloaded Return Type ───────────────────────────────────────────────────
+
+type UseApiMutationFn<K extends ApiRouteKey> =
+  HasVariables<ApiRoutes[K]> extends true
+    ? <T, TPayload = unknown>(
+        args: UseApiMutationArgs<T, K>,
+      ) => UseApiMutationResult<T, TPayload>
+    : <T, TPayload = unknown>(
+        args?: UseApiMutationArgs<T, K>,
+      ) => UseApiMutationResult<T, TPayload>;
+
+// ─── The Hook ─────────────────────────────────────────────────────────────────
+
+export function useApiMutation<K extends ApiRouteKey>(
+  route: K,
+): UseApiMutationFn<K> {
+  function useInternalMutation<T, TPayload = unknown>(
+    args?: UseApiMutationArgs<T, K>,
+  ): UseApiMutationResult<T, TPayload> {
+    const {
+      pathParams,
+      method = "POST",
+      onSuccess,
+      onError,
+      invalidateRoutes,
+    } = (args ?? {}) as UseApiMutationArgs<T, K> & {
+      pathParams?: Record<string, string>;
+    };
+
+    const queryClient = useQueryClient();
+    const [data, setData] = useState<T | undefined>(undefined);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [isError, setIsError] = useState(false);
+    const [error, setError] = useState<ApiError | null>(null);
+
+    // Keep refs current so execute always calls the latest callbacks
+    // even though execute itself is memoised with a stable deps array.
+    const onSuccessRef = useRef(onSuccess);
+    const onErrorRef = useRef(onError);
+    const invalidateRoutesRef = useRef(invalidateRoutes);
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+    invalidateRoutesRef.current = invalidateRoutes;
+
+    const pathTemplate = API_ROUTES[route];
+
+    const pathParamsKey = JSON.stringify(pathParams);
+    const url = useMemo(
+      () => interpolatePath(pathTemplate, pathParams),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [pathTemplate, pathParamsKey],
+    );
+
+    const execute = useCallback(
+      async (
+        payload?: TPayload,
+        options?: {
+          pathParams?: Record<string, string>;
+          queryParams?: Record<string, unknown>;
+        },
+      ): Promise<T> => {
+        const basePath = options?.pathParams
+          ? interpolatePath(pathTemplate, options.pathParams)
+          : url;
+
+        const queryString = options?.queryParams
+          ? "?" +
+            new URLSearchParams(
+              Object.entries(options.queryParams)
+                .filter(([, v]) => v !== undefined && v !== null)
+                .map(([k, v]) => [k, String(v)]),
+            ).toString()
+          : "";
+
+        const finalUrl = `${basePath}${queryString}`;
+
+        setIsLoading(true);
+        setIsError(false);
+        setError(null);
+
+        try {
+          let result: T;
+
+          switch (method) {
+            case "POST":
+              result = await ictClient.post<T>(finalUrl, payload);
+              break;
+            case "PUT":
+              result = await ictClient.put<T>(finalUrl, payload);
+              break;
+            case "PATCH":
+              result = await ictClient.patch<T>(finalUrl, payload);
+              break;
+            case "DELETE":
+              result = await ictClient.delete<T>(finalUrl);
+              break;
+          }
+
+          setData(result);
+          setIsSuccess(true);
+
+          // Invalidate BEFORE calling onSuccess so the cache is already stale
+          // by the time navigation happens (onSuccess typically calls navigate).
+          if (invalidateRoutesRef.current?.length) {
+            await Promise.all(
+              invalidateRoutesRef.current.map((routeKey) =>
+                queryClient.invalidateQueries({
+                  queryKey: [API_ROUTES[routeKey]],
+                }),
+              ),
+            );
+          }
+
+          onSuccessRef.current?.(result);
+
+          return result;
+        } catch (err) {
+          const apiError =
+            err instanceof ApiError
+              ? err
+              : new ApiError("Unexpected error occurred", 0, err);
+
+          setIsError(true);
+          setError(apiError);
+          onErrorRef.current?.(apiError);
+          throw apiError;
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [url, method, pathTemplate],
+    );
+
+    const reset = useCallback(() => {
+      setData(undefined);
+      setIsLoading(false);
+      setIsSuccess(false);
+      setIsError(false);
+      setError(null);
+    }, []);
+
+    return { execute, data, isLoading, isSuccess, isError, error, reset };
+  }
+
+  return useInternalMutation as UseApiMutationFn<K>;
+}
