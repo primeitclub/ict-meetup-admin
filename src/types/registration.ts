@@ -7,8 +7,15 @@ export const RegistrationStatus = {
 export type RegistrationStatus =
   (typeof RegistrationStatus)[keyof typeof RegistrationStatus];
 
+export interface Participant {
+  fullName: string;
+  email: string;
+  phoneNumber?: string | null;
+}
+
 export interface EventRegistration {
   id: string;
+  trackingId: string;
   username: string;
   email: string;
   contactNumber: string;
@@ -20,6 +27,10 @@ export interface EventRegistration {
   eventId: string;
   versionId: string;
   status: RegistrationStatus;
+  /** Only populated for GROUP events. */
+  teamName?: string | null;
+  /** Only populated for GROUP events. */
+  participants?: Participant[] | null;
   createdAt: string;
   updatedAt: string;
 }
