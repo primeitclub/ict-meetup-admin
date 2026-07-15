@@ -11,6 +11,7 @@ import {
   RegistrationStatus,
   type EventRegistration,
 } from "../../types/registration";
+import TeamMembersDialog from "./TeamMembersDialog";
 import type { EventItem } from "../content-management/events/types";
 import useGetVersionOptions from "../../lib/hooks/use-get-version-options";
 import { getImageUrl } from "../../utils/imageUtils";
@@ -31,6 +32,8 @@ export default function Registrations() {
   const [confirmApprove, setConfirmApprove] = useState<string | null>(null);
   const [confirmReject, setConfirmReject] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [teamRegistration, setTeamRegistration] =
+    useState<EventRegistration | null>(null);
 
   const { data: eventsData, isLoading: eventsLoading } = useApiQuery(
     "events",
@@ -45,7 +48,10 @@ export default function Registrations() {
     }
   }, [activeVersionId, selectedVersionId]);
 
-  const events = eventsData?.data?.items ?? [];
+  const events = useMemo(
+    () => eventsData?.data?.items ?? [],
+    [eventsData],
+  );
 
   const { data, isLoading, refetch } = useApiQuery(
     "eventRegistrations",
@@ -90,6 +96,12 @@ export default function Registrations() {
     );
   }, [confirmReject, updateStatus]);
 
+  const selectedEvent = useMemo(
+    () => events.find((e) => e.id === selectedEventId),
+    [events, selectedEventId],
+  );
+  const isGroupEvent = selectedEvent?.eventType === "GROUP";
+
   const columns: ColumnDef<EventRegistration>[] = useMemo(
     () => [
       {
@@ -99,7 +111,7 @@ export default function Registrations() {
       },
       {
         accessorKey: "username",
-        header: "Name",
+        header: isGroupEvent ? "Team Leader" : "Name",
       },
       {
         accessorKey: "email",
@@ -112,6 +124,35 @@ export default function Registrations() {
         accessorKey: "contactNumber",
         header: "Phone",
       },
+      ...(isGroupEvent
+        ? [
+            {
+              id: "team",
+              header: "Team",
+              accessorFn: (row: EventRegistration) => row.teamName ?? "",
+              cell: ({ row }: { row: { original: EventRegistration } }) => {
+                const reg = row.original;
+                const count = reg.participants?.length ?? 0;
+                if (!reg.teamName && count === 0) {
+                  return <span className="text-muted-foreground text-xs">—</span>;
+                }
+                return (
+                  <button
+                    onClick={() => setTeamRegistration(reg)}
+                    className="flex flex-col items-start text-left group"
+                  >
+                    <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">
+                      {reg.teamName || "—"}
+                    </span>
+                    <span className="text-xs text-accent">
+                      {count} {count === 1 ? "member" : "members"} · View
+                    </span>
+                  </button>
+                );
+              },
+            } satisfies ColumnDef<EventRegistration>,
+          ]
+        : []),
       {
         accessorKey: "isStudent",
         header: "Student",
@@ -131,7 +172,6 @@ export default function Registrations() {
         id: "payment",
         header: "Payment",
         cell: ({ row }) => {
-          const selectedEvent = events.find((e) => e.id === selectedEventId);
           const val = row.original.attachedPaymentScreenshot;
           if (selectedEvent?.feeType === "free" || val === "free") {
             return <span className="text-xs font-medium text-emerald-600">Free</span>;
@@ -207,7 +247,14 @@ export default function Registrations() {
         },
       },
     ],
-    [setConfirmApprove, setConfirmReject, setPreviewUrl, events, selectedEventId],
+    [
+      setConfirmApprove,
+      setConfirmReject,
+      setPreviewUrl,
+      setTeamRegistration,
+      selectedEvent,
+      isGroupEvent,
+    ],
   );
 
   const items = data?.data?.items ?? [];
@@ -329,6 +376,11 @@ export default function Registrations() {
           </div>
         </div>
       )}
+
+      <TeamMembersDialog
+        registration={teamRegistration}
+        onClose={() => setTeamRegistration(null)}
+      />
 
       <ConfirmDialog
         open={!!confirmApprove}

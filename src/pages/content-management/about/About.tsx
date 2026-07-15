@@ -12,6 +12,7 @@ import VersionSelectFilter from "../../../components/VersionSelectFilter";
 import type { AboutSection } from "./types";
 import toast from "react-hot-toast";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
+import { htmlToPlainText } from "../../../shared/utils/html";
 
 export default function About() {
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ export default function About() {
         header: "Content",
         cell: ({ row }) => (
           <span className="line-clamp-2 max-w-xs text-muted-foreground">
-            {row.original.content}
+            {htmlToPlainText(row.original.content)}
           </span>
         ),
       },

@@ -12,7 +12,7 @@ interface FormInputInterface extends InputHTMLAttributes<HTMLInputElement> {
 
 const FormInput = ({name, label, rules, isRequired, ...props}: FormInputInterface)=>{
 
-    const {control, formState:{errors}} = useFormContext();
+    const {control} = useFormContext();
     const required = isRequired ?? Boolean(rules?.required);
 
     return (
@@ -20,7 +20,9 @@ const FormInput = ({name, label, rules, isRequired, ...props}: FormInputInterfac
             name={name}
             control={control}
             rules={rules}
-            render={ ({field:{name,onChange,value,ref}})=>(
+            // `fieldState` resolves nested names (e.g. "depts.0.contacts.1.phone")
+            // that a flat errors[name] lookup would miss.
+            render={ ({field:{name,onChange,value,ref}, fieldState:{error}})=>(
                 <Input
                 label={label}
                 isRequired={required}
@@ -28,7 +30,7 @@ const FormInput = ({name, label, rules, isRequired, ...props}: FormInputInterfac
                 onChange={onChange}
                 value={value}
                 ref={ref}
-                error={errors[name]?.message as string | undefined}
+                error={error?.message}
                 {...props}
                 />
             ) }

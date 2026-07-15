@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import FormInput from "../../../components/form-field/input-field/InputController";
 import FormSelect from "../../../components/form-field/input-select/SelectController";
 import FormComboBox from "../../../components/form-field/combobox/FormComboBox";
+import FormMultiComboBox from "../../../components/form-field/combobox/FormMultiComboBox";
 import Textarea from "../../../components/form-field/Textarea";
 import FormDateRange from "../../../components/form-field/date-picker/FormDateRange";
 import FormTimeRange from "../../../components/form-field/time-picker/FormTimeRange";
@@ -19,6 +20,7 @@ import {
   type EventCategory,
   type EventFeeType,
   EventStatus,
+  EventType,
 } from "./types";
 import type { Speaker } from "../../../types/speaker";
 
@@ -34,7 +36,7 @@ interface EventFormValues {
   date: string;
   categoryId: string;
   versionId: string;
-  speakerId: string;
+  speakerIds: string[];
   totalSeats: string;
   feeType: EventFeeType | "";
   fee: string;
@@ -43,6 +45,9 @@ interface EventFormValues {
   registrationDeadline: string;
   displayOrder: string;
   isHighlighted: boolean;
+  eventType: EventType | "";
+  maxParticipants: string;
+  registerLink: string;
 }
 
 const feeTypeOptions = [
@@ -54,6 +59,11 @@ const statusOptions = [
   { label: "Archived", value: EventStatus.ARCHIVED },
   { label: "Draft", value: EventStatus.DRAFT },
   { label: "Published", value: EventStatus.PUBLISHED },
+];
+
+const eventTypeOptions = [
+  { label: "Single", value: EventType.SINGLE },
+  { label: "Group", value: EventType.GROUP },
 ];
 
 export default function EventsForm() {
@@ -98,7 +108,7 @@ export default function EventsForm() {
       date: "",
       categoryId: "",
       versionId: "",
-      speakerId: "",
+      speakerIds: [],
       totalSeats: "",
       feeType: "",
       fee: "",
@@ -107,6 +117,9 @@ export default function EventsForm() {
       registrationDeadline: "",
       displayOrder: "",
       isHighlighted: false,
+      eventType: "",
+      maxParticipants: "",
+      registerLink: "",
     },
   });
   const {
@@ -122,6 +135,8 @@ export default function EventsForm() {
   const isPaid = watch("feeType") === "paid";
   const selectedVersionId = watch("versionId");
   const isHighlighted = watch("isHighlighted");
+  const selectedEventType = watch("eventType");
+  const isGroup = selectedEventType === EventType.GROUP;
 
   const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
     "speakers",
@@ -148,10 +163,11 @@ export default function EventsForm() {
   useEffect(() => {
     const prev = prevVersionIdRef.current;
     prevVersionIdRef.current = selectedVersionId;
-    // Only clear speakerId when the user actively switches from one valid version to another.
-    // Skip when going from "" → something (initial load / reset populating the form).
+    // Only clear speakers when the user actively switches from one valid version to
+    // another — speakers are version-scoped, so the old picks are invalid for the new
+    // version. Skip when going from "" → something (initial load / reset populating the form).
     if (prev && selectedVersionId && prev !== selectedVersionId) {
-      setValue("speakerId", "", { shouldDirty: false });
+      setValue("speakerIds", [], { shouldDirty: false });
     }
   }, [selectedVersionId, setValue]);
 
@@ -171,7 +187,7 @@ export default function EventsForm() {
         date: ev.date ? ev.date.split("T")[0] : "",
         categoryId: ev.categoryId ?? "",
         versionId: ev.versionId ?? "",
-        speakerId: ev.speakerId ?? "",
+        speakerIds: (ev.speakers ?? []).map((speaker) => speaker.id),
         totalSeats: ev.totalSeats?.toString() ?? "",
         feeType: ev.feeType ?? "",
         fee: ev.fee ?? "",
@@ -182,33 +198,20 @@ export default function EventsForm() {
           : "",
         displayOrder: ev.displayOrder?.toString() ?? "",
         isHighlighted: ev.isHighlighted ?? false,
+        eventType: ev.eventType ?? "",
+        maxParticipants: ev.maxParticipants?.toString() ?? "",
+        registerLink: ev.registerLink ?? "",
       });
     }
   }, [existingData, reset]);
 
+  // Auto-select the active version on create — without resetting other fields
+  // the user may have already filled in.
   useEffect(() => {
-    if (!isEdit) {
-      reset({
-        title: "",
-        subtitle: "",
-        description: "",
-        startTime: "",
-        endTime: "",
-        date: "",
-        categoryId: "",
-        versionId: activeVersionId || "",
-        speakerId: "",
-        totalSeats: "",
-        feeType: "",
-        fee: "",
-        location: "",
-        status: "",
-        registrationDeadline: "",
-        displayOrder: "",
-        isHighlighted: false,
-      });
+    if (!isEdit && activeVersionId) {
+      setValue("versionId", activeVersionId);
     }
-  }, [isEdit, reset, activeVersionId]);
+  }, [isEdit, activeVersionId, setValue]);
 
   const { execute: createEvent, isLoading: isCreating } = useApiMutation(
     "events",
@@ -245,10 +248,25 @@ export default function EventsForm() {
 
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        // Append one field per element — String(array) would comma-join into a single
+        // value. An empty array still sends "" so the API can tell "none selected"
+        // apart from "field omitted, leave unchanged".
+        if (value.length === 0) {
+          formData.append(key, "");
+        } else {
+          value.forEach((item) => formData.append(key, String(item)));
+        }
+        return;
+      }
       if (value !== "" && value !== undefined && value !== null) {
         formData.append(key, String(value));
       }
     });
+    // Always send registerLink, blank included. The loop above skips empty
+    // strings, which would make clearing an existing link a silent no-op.
+    // set() replaces the loop's value rather than appending a duplicate.
+    formData.set("registerLink", (data.registerLink ?? "").trim());
     if (imageFile) {
       formData.append("image", imageFile);
     }
@@ -376,10 +394,10 @@ export default function EventsForm() {
                     navigate("/content-management/events/categories/add"),
                 }}
               />
-              <FormComboBox
+              <FormMultiComboBox
                 control={control}
-                name="speakerId"
-                label="Speaker"
+                name="speakerIds"
+                label="Speakers"
                 options={speakerOptions}
                 placeholder={
                   isFetching
@@ -388,12 +406,12 @@ export default function EventsForm() {
                       ? "Select a version first"
                       : speakersLoading
                         ? "Loading speakers…"
-                        : "Select a speaker"
+                        : "Select speakers"
                 }
                 searchPlaceholder="Search speakers…"
                 emptyText="No speakers found"
                 disabled={isFetching || (!selectedVersionId && !isEdit) || speakersLoading}
-                error={errors.speakerId?.message}
+                error={errors.speakerIds?.message}
               />
               <FormInput
                 name="location"
@@ -424,6 +442,54 @@ export default function EventsForm() {
                 }}
                 isRequired
               />
+            </div>
+
+            <Divider />
+
+            {/* Event Type */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormSelect
+                name="eventType"
+                label="Event Type"
+                options={eventTypeOptions}
+                rules={{ required: "Event type is required" }}
+              />
+              {isGroup && (
+                <FormInput
+                  name="maxParticipants"
+                  label="Max Participants per Team"
+                  type="number"
+                  placeholder="e.g. 4"
+                  rules={{
+                    required: "Max participants is required for group events",
+                    min: { value: 1, message: "Must be at least 1" },
+                    max: { value: 20, message: "Cannot exceed 20 participants" },
+                  }}
+                  isRequired
+                />
+              )}
+            </div>
+
+            <Divider />
+
+            {/* External registration */}
+            <div className="grid grid-cols-1 gap-2">
+              <FormInput
+                name="registerLink"
+                label="External Registration Link"
+                placeholder="https://forms.gle/…"
+                rules={{
+                  maxLength: { value: 500, message: "Max 500 characters" },
+                  pattern: {
+                    value: /^https?:\/\/.+/i,
+                    message: "Must be a valid URL (http:// or https://)",
+                  },
+                }}
+              />
+              <Text size="xs" variant="muted">
+                Optional. If set, the Register button sends users straight to
+                this URL instead of the in-app registration form.
+              </Text>
             </div>
 
             <Divider />

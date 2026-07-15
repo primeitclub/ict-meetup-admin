@@ -32,6 +32,51 @@ interface ContactFormValues {
   contactDepartments: ContactDepartment[];
 }
 
+// Name/phone rules below mirror the backend schema in
+// ict-meetup-api/src/modules/settings/validators/settings.validator.ts —
+// keep the two in sync.
+
+const nameRule = {
+  required: "Name is required",
+  maxLength: { value: 100, message: "Max 100 characters" },
+  validate: {
+    notBlank: (v: string) =>
+      (v ?? "").trim().length > 0 || "Name is required",
+    minLength: (v: string) =>
+      (v ?? "").trim().length >= 2 || "Name must be at least 2 characters",
+    // \p{M} keeps Devanagari combining vowel signs (e.g. "राम") valid.
+    charset: (v: string) =>
+      /^[\p{L}\p{M}\s.'-]+$/u.test((v ?? "").trim()) ||
+      "Name can only contain letters, spaces, and . ' -",
+  },
+};
+
+// Shared by the optional general phone and the required per-contact phone.
+// Both checks pass on an empty value so `required` decides whether blank is OK.
+const phoneFormatRule = {
+  maxLength: { value: 20, message: "Max 20 characters" },
+  validate: {
+    charset: (v: string) => {
+      const s = (v ?? "").trim();
+      return (
+        s === "" ||
+        /^\+?[\d\s()-]+$/.test(s) ||
+        "Phone can only contain digits, spaces, and + ( ) -"
+      );
+    },
+    digitCount: (v: string) => {
+      const s = (v ?? "").trim();
+      if (s === "") return true;
+      const digits = s.replace(/\D/g, "");
+      if (digits.length < 7) return "Phone must have at least 7 digits";
+      if (digits.length > 15) return "Phone must have at most 15 digits";
+      return true;
+    },
+  },
+};
+
+const contactPhoneRule = { required: "Phone is required", ...phoneFormatRule };
+
 export default function ContactManagement() {
   const {
     versionOptions,
@@ -260,9 +305,7 @@ export default function ContactManagement() {
                 name="phoneNumber"
                 label="Phone Number"
                 placeholder="+977 98XXXXXXXX"
-                rules={{
-                  maxLength: { value: 20, message: "Max 20 characters" },
-                }}
+                rules={phoneFormatRule}
               />
             </div>
 
@@ -464,13 +507,13 @@ function DeptBlock({
               name={`contactDepartments.${deptIndex}.contacts.${contactIndex}.name`}
               label="Name"
               placeholder="Full name"
-              rules={{ required: "Name is required" }}
+              rules={nameRule}
             />
             <FormInput
               name={`contactDepartments.${deptIndex}.contacts.${contactIndex}.phone`}
               label="Phone"
               placeholder="+977 98XXXXXXXX"
-              rules={{ required: "Phone is required" }}
+              rules={contactPhoneRule}
             />
             <button
               type="button"

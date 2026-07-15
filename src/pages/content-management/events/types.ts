@@ -6,6 +6,11 @@ export enum EventStatus {
   ARCHIVED = "archived",
 }
 
+export enum EventType {
+  SINGLE = "SINGLE",
+  GROUP = "GROUP",
+}
+
 export interface EventItem {
   id: string;
   createdAt: string;
@@ -29,7 +34,8 @@ export interface EventItem {
     is_current: boolean;
     status: string;
   };
-  speakerId: string;
+  /** Populated speaker relation (when the API includes it on GET). */
+  speakers?: EventSpeaker[];
   totalSeats: number;
   feeType: EventFeeType;
   fee: string;
@@ -43,6 +49,19 @@ export interface EventItem {
   /** Full, displayable URL returned by the API — use this for previews/tables. */
   imageUrl: string | null;
   isHighlighted: boolean;
+  eventType: EventType;
+  maxParticipants: number | null;
+  /** Optional external registration URL; overrides the in-app register flow. */
+  registerLink: string | null;
+}
+
+export interface EventSpeaker {
+  id: string;
+  name: string;
+  designation: string;
+  imagePath: string | null;
+  imageUrl: string | null;
+  socialLinks?: unknown;
 }
 
 export interface EventCategory {
