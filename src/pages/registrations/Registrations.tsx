@@ -169,6 +169,11 @@ export default function Registrations() {
         cell: ({ row }) => row.original.educationLevel ?? "—",
       },
       {
+        accessorKey: "collegeName",
+        header: "College",
+        cell: ({ row }) => row.original.collegeName ?? "—",
+      },
+      {
         id: "payment",
         header: "Payment",
         cell: ({ row }) => {
