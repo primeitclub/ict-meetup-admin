@@ -8,8 +8,9 @@ import FormSelect from "../../../components/form-field/input-select/SelectContro
 import FormComboBox from "../../../components/form-field/combobox/FormComboBox";
 import FormMultiComboBox from "../../../components/form-field/combobox/FormMultiComboBox";
 import Textarea from "../../../components/form-field/Textarea";
-import FormDateRange from "../../../components/form-field/date-picker/FormDateRange";
+import FormDatePicker from "../../../components/form-field/date-picker/FormDatePicker";
 import FormTimeRange from "../../../components/form-field/time-picker/FormTimeRange";
+import { parseDate } from "../../../shared/utils/date";
 import FormFileUpload from "../../../components/form-field/FormFileUpload";
 import useGetVersionOptions from "../../../lib/hooks/use-get-version-options";
 import { useApiQuery } from "../../../lib";
@@ -137,6 +138,27 @@ export default function EventsForm() {
   const isHighlighted = watch("isHighlighted");
   const selectedEventType = watch("eventType");
   const isGroup = selectedEventType === EventType.GROUP;
+  const eventDate = watch("date");
+  const registrationDeadline = watch("registrationDeadline");
+
+  // Keep the two pickers mutually exclusive at the UI level — disabling the
+  // invalid days is more reliable than showing a validation error after the
+  // fact, and matches the API's "deadline must be before the event date" rule.
+  const minEventDate = useMemo(() => {
+    const deadline = parseDate(registrationDeadline);
+    if (!deadline) return undefined;
+    const next = new Date(deadline);
+    next.setDate(next.getDate() + 1);
+    return next;
+  }, [registrationDeadline]);
+
+  const maxRegistrationDeadline = useMemo(() => {
+    const date = parseDate(eventDate);
+    if (!date) return undefined;
+    const prev = new Date(date);
+    prev.setDate(prev.getDate() - 1);
+    return prev;
+  }, [eventDate]);
 
   const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
     "speakers",
@@ -340,18 +362,24 @@ export default function EventsForm() {
             <Divider />
 
             {/* Schedule */}
-            <div className="grid grid-cols-2 gap-6">
-              <FormDateRange
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormDatePicker
                 control={control}
-                startName="registrationDeadline"
-                endName="date"
-                label="Event Date Range"
+                name="date"
+                label="Event Date"
                 rules={{ required: "Event date is required" }}
-                error={
-                  errors.date?.message || errors.registrationDeadline?.message
-                }
+                error={errors.date?.message}
                 isRequired
-                placeholder="Registration deadline → Event date"
+                minDate={minEventDate}
+              />
+              <FormDatePicker
+                control={control}
+                name="registrationDeadline"
+                label="Registration Deadline"
+                rules={{ required: "Registration deadline is required" }}
+                error={errors.registrationDeadline?.message}
+                isRequired
+                maxDate={maxRegistrationDeadline}
               />
               <FormTimeRange
                 control={control}
