@@ -27,8 +27,6 @@ interface ContactDepartment {
 }
 
 interface ContactFormValues {
-  email: string;
-  phoneNumber: string;
   contactDepartments: ContactDepartment[];
 }
 
@@ -91,8 +89,6 @@ export default function ContactManagement() {
 
   const methods = useForm<ContactFormValues>({
     defaultValues: {
-      email: "",
-      phoneNumber: "",
       contactDepartments: [],
     },
   });
@@ -132,16 +128,6 @@ export default function ContactManagement() {
         },
       },
       {
-        accessorKey: "email",
-        header: "Email",
-        cell: ({ row }) => row.original.email || "—",
-      },
-      {
-        accessorKey: "phoneNumber",
-        header: "Phone",
-        cell: ({ row }) => row.original.phoneNumber || "—",
-      },
-      {
         header: "Departments",
         cell: ({ row }) => {
           const depts = row.original.contactDepartments;
@@ -175,14 +161,10 @@ export default function ContactManagement() {
   useEffect(() => {
     if (settings) {
       reset({
-        email: settings.email || "",
-        phoneNumber: settings.phoneNumber || "",
         contactDepartments: settings.contactDepartments || [],
       });
     } else {
       reset({
-        email: "",
-        phoneNumber: "",
         contactDepartments: [],
       });
     }
@@ -208,15 +190,11 @@ export default function ContactManagement() {
 
   const onSubmit = async (data: ContactFormValues) => {
     await save(selectedVersionId, (fd) => {
-      fd.append("email", data.email.trim());
-      fd.append("phoneNumber", data.phoneNumber.trim());
       fd.append("contactDepartments", JSON.stringify(data.contactDepartments));
     });
 
     // Clear the form inputs immediately after submit.
     reset({
-      email: "",
-      phoneNumber: "",
       contactDepartments: [],
     });
   };
@@ -287,30 +265,6 @@ export default function ContactManagement() {
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="p-6 space-y-6">
-            {/* ── General Info ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormInput
-                name="email"
-                label="Email"
-                type="email"
-                placeholder="hello@ictmeetup.com"
-                rules={{
-                  pattern: {
-                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: "Enter a valid email",
-                  },
-                }}
-              />
-              <FormInput
-                name="phoneNumber"
-                label="Phone Number"
-                placeholder="+977 98XXXXXXXX"
-                rules={phoneFormatRule}
-              />
-            </div>
-
-            <Divider />
-
             {/* ── Contact Departments ── */}
             <div className="space-y-4">
               {deptFields.length === 0 && (
@@ -346,25 +300,6 @@ export default function ContactManagement() {
               <Text size="sm" variant="muted">
                 Current values for this version
               </Text>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-lg border border-border p-4 space-y-1">
-                  <Text size="xs" variant="muted">
-                    Email
-                  </Text>
-                  <Text>{settings?.email ?? "—"}</Text>
-                </div>
-                <div className="rounded-lg border border-border p-4 space-y-1">
-                  <Text size="xs" variant="muted">
-                    Phone Number
-                  </Text>
-                  <Text>{settings?.phoneNumber ?? "—"}</Text>
-                </div>
-                {/* <div className="rounded-lg border border-border p-4 space-y-1">
-                  <Text size="xs" variant="muted">Team Name</Text>
-                  <Text>{settings?.teamName ?? "—"}</Text>
-                </div> */}
-              </div>
 
               <div className="space-y-3">
                 {(settings?.contactDepartments?.length ?? 0) === 0 ? (
