@@ -21,6 +21,7 @@ export interface EventRegistration {
   contactNumber: string;
   isStudent: boolean;
   educationLevel?: string | null;
+  collegeName?: string | null;
   faculty?: string | null;
   year?: number | null;
   attachedPaymentScreenshot: string;
