@@ -26,6 +26,7 @@ jobs:
         env:
           CI: false
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_FRONTEND_URL: ${{ secrets.VITE_FRONTEND_URL }}
 
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4

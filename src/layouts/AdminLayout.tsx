@@ -87,7 +87,7 @@ export default function AdminLayout() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <a
-              href="/"
+              href={import.meta.env.VITE_FRONTEND_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-border bg-surface text-sm text-foreground hover:bg-surface-2 transition-colors"
