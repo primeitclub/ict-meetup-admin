@@ -23,6 +23,7 @@
     "@tiptap/pm": "^3.26.0",
     "@tiptap/react": "^3.26.0",
     "@types/react-datepicker": "^7.0.0",
+    "@uiw/react-markdown-editor": "^6.1.4",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "lucide-react": "^0.562.0",
