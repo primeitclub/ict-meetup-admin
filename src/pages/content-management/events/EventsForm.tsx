@@ -7,7 +7,7 @@ import FormInput from "../../../components/form-field/input-field/InputControlle
 import FormSelect from "../../../components/form-field/input-select/SelectController";
 import FormComboBox from "../../../components/form-field/combobox/FormComboBox";
 import FormMultiComboBox from "../../../components/form-field/combobox/FormMultiComboBox";
-import Textarea from "../../../components/form-field/Textarea";
+import FormMarkdown from "../../../components/form-field/markdown/MarkdownController";
 import FormDatePicker from "../../../components/form-field/date-picker/FormDatePicker";
 import FormTimeRange from "../../../components/form-field/time-picker/FormTimeRange";
 import { parseDate } from "../../../shared/utils/date";
@@ -124,7 +124,6 @@ export default function EventsForm() {
     },
   });
   const {
-    register,
     control,
     handleSubmit,
     reset,
@@ -596,14 +595,12 @@ export default function EventsForm() {
             <Divider />
 
             {/* Description — last */}
-            <Textarea
+            <FormMarkdown
+              name="description"
               label="Description"
-              placeholder="Describe the event"
+              placeholder="Describe the event (markdown supported)"
               isRequired
-              {...register("description", {
-                required: "Description is required",
-              })}
-              error={errors.description?.message}
+              rules={{ required: "Description is required" }}
             />
           </div>
 
