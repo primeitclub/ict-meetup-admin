@@ -68,7 +68,7 @@ export default function About() {
           row.original.imageUrl ? (
             <img
               src={getImageUrl(row.original.imageUrl)}
-              alt={row.original.title}
+              alt="About section"
               className="h-10 w-10 rounded-md object-cover border border-border"
             />
           ) : (
@@ -76,10 +76,6 @@ export default function About() {
               <ImageIcon size={14} />
             </div>
           ),
-      },
-      {
-        accessorKey: "title",
-        header: "Title",
       },
       {
         accessorKey: "content",

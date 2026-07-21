@@ -34,4 +34,8 @@ export interface EventRegistration {
   participants?: Participant[] | null;
   createdAt: string;
   updatedAt: string;
+  /** Populated relation — the event this registration belongs to. */
+  event?: { id: string; versionId: string; title: string } | null;
+  /** Populated relation — the version this registration belongs to. */
+  version?: { id: string; version_name: string; status: string } | null;
 }

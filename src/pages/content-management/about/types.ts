@@ -10,7 +10,6 @@ export interface AboutSection {
   versionId: string;
   /** Populated version relation (when the API includes it on GET). */
   flagshipEventVersion: FlagshipEventVersion;
-  title: string;
   content: string;
   /** Image URL once stored. The upload itself is multipart binary. */
   imageUrl: string | null;
