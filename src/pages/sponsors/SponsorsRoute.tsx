@@ -4,7 +4,6 @@ import {
   CategoryForm,
   AllSponsors,
   SponsorForm,
-  SponsorsArchive,
   SponsorsLayout,
 } from "..";
 
@@ -23,7 +22,6 @@ const SponsorsRouter = () => {
           <Route path="add" element={<SponsorForm />} />
           <Route path="edit/:id" element={<SponsorForm />} />
         </Route>
-        <Route path="archive" element={<SponsorsArchive />} />
       </Route>
     </Routes>
   );
