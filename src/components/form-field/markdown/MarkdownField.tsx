@@ -1,4 +1,5 @@
 import MarkdownEditor from "@uiw/react-markdown-editor";
+import { EditorView } from "@codemirror/view";
 import FieldLabel from "../FieldLabel";
 import { useThemeStore } from "../../../store/theme.store";
 import { cn } from "../../../shared/utils/cn";
@@ -47,6 +48,9 @@ export default function MarkdownField({
         <MarkdownEditor
           value={value}
           height="240px"
+          // Wrap long lines to the editor width instead of letting the text
+          // grow the editor (and container) horizontally.
+          extensions={[EditorView.lineWrapping]}
           placeholder={placeholder}
           // Store "" when visually empty so `required` validation still fires.
           onChange={(next) => onChange(next.trim() === "" ? "" : next)}
