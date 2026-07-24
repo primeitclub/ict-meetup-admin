@@ -59,6 +59,8 @@ export default function GalleryEditor() {
   });
 
   const [images, setImages] = useState<EditorImage[]>([]);
+  // One link is applied to every image in the gallery.
+  const [link, setLink] = useState("");
   const initialized = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const keyCounter = useRef(0);
@@ -67,7 +69,10 @@ export default function GalleryEditor() {
   // mutation responses update it directly).
   useEffect(() => {
     if (initialized.current || !data?.data) return;
-    setImages(toEditorImages(data.data.images ?? [], (keyCounter.current += 1)));
+    const seeded = toEditorImages(data.data.images ?? [], (keyCounter.current += 1));
+    setImages(seeded);
+    // Adopt the first existing link as the shared link.
+    setLink(seeded.find((img) => img.link)?.link ?? "");
     initialized.current = true;
   }, [data]);
 
@@ -139,12 +144,6 @@ export default function GalleryEditor() {
     });
   };
 
-  const handleLinkChange = (key: string, link: string) => {
-    setImages((prev) =>
-      prev.map((img) => (img.key === key ? { ...img, link } : img)),
-    );
-  };
-
   const handleRemove = (img: EditorImage) => {
     if (img.id) {
       // Existing image → instant delete via the API (blocked below 1).
@@ -183,14 +182,16 @@ export default function GalleryEditor() {
 
     const formData = new FormData();
     // `data` describes the desired final list. New (no-id) items consume the
-    // appended files in the same order they appear here.
+    // appended files in the same order they appear here. One link is applied
+    // to every image.
+    const sharedLink = link.trim();
     const desired: { id?: string; link: string }[] = [];
     for (const img of images) {
       if (img.id) {
-        desired.push({ id: img.id, link: img.link.trim() });
+        desired.push({ id: img.id, link: sharedLink });
       } else if (img.file) {
         formData.append("image", img.file);
-        desired.push({ link: img.link.trim() });
+        desired.push({ link: sharedLink });
       }
     }
     formData.append("data", JSON.stringify(desired));
@@ -248,6 +249,25 @@ export default function GalleryEditor() {
 
         {!isLoading && !isError && (
           <>
+            {/* One link applied to all images */}
+            <div className="space-y-1.5">
+              <Text size="sm" variant="muted">
+                Link (applied to all)
+              </Text>
+              <input
+                type="url"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://… (optional)"
+                className={cn(
+                  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm",
+                  "focus:border-accent focus:outline-none",
+                )}
+              />
+            </div>
+
+            <Divider />
+
             <div className="flex items-center justify-between">
               <Text size="sm" variant="muted">
                 Images ({images.length}/{GALLERY_MAX_IMAGES})
@@ -282,7 +302,7 @@ export default function GalleryEditor() {
                 return (
                   <div
                     key={img.key}
-                    className="rounded-lg border border-border bg-background p-3 space-y-3"
+                    className="rounded-lg border border-border bg-background p-3"
                   >
                     <div className="relative">
                       <img
@@ -309,16 +329,6 @@ export default function GalleryEditor() {
                         </span>
                       )}
                     </div>
-                    <input
-                      type="url"
-                      value={img.link}
-                      onChange={(e) => handleLinkChange(img.key, e.target.value)}
-                      placeholder="https://… (optional link)"
-                      className={cn(
-                        "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm",
-                        "focus:border-accent focus:outline-none",
-                      )}
-                    />
                   </div>
                 );
               })}

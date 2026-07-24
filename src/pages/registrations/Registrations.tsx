@@ -56,8 +56,12 @@ export default function Registrations() {
   const { data, isLoading, refetch } = useApiQuery(
     "eventRegistrations",
   )<{ data: { items: EventRegistration[] } }>({
-    queryParams: { eventId: selectedEventId },
-    enabled: !!selectedEventId,
+    queryParams: {
+      versionId: selectedVersionId,
+      eventId: selectedEventId || undefined,
+      limit: 100,
+    },
+    enabled: !!selectedVersionId,
   });
 
   const { execute: updateStatus, isLoading: isUpdatingStatus } = useApiMutation(
@@ -113,6 +117,20 @@ export default function Registrations() {
         accessorKey: "username",
         header: isGroupEvent ? "Team Leader" : "Name",
       },
+      ...(!selectedEventId
+        ? [
+            {
+              id: "event",
+              header: "Event",
+              accessorFn: (row: EventRegistration) => row.event?.title ?? "",
+              cell: ({ row }: { row: { original: EventRegistration } }) => (
+                <span className="text-sm text-foreground">
+                  {row.original.event?.title ?? "—"}
+                </span>
+              ),
+            } satisfies ColumnDef<EventRegistration>,
+          ]
+        : []),
       {
         accessorKey: "email",
         header: "Email",
@@ -124,7 +142,7 @@ export default function Registrations() {
         accessorKey: "contactNumber",
         header: "Phone",
       },
-      ...(isGroupEvent
+      ...(isGroupEvent || !selectedEventId
         ? [
             {
               id: "team",
@@ -258,6 +276,7 @@ export default function Registrations() {
       setPreviewUrl,
       setTeamRegistration,
       selectedEvent,
+      selectedEventId,
       isGroupEvent,
     ],
   );
@@ -308,7 +327,7 @@ export default function Registrations() {
             className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
           >
             <option value="">
-              {eventsLoading ? "Loading…" : "Select an event…"}
+              {eventsLoading ? "Loading…" : "All events"}
             </option>
             {events.map((ev) => (
               <option key={ev.id} value={ev.id}>
@@ -320,7 +339,7 @@ export default function Registrations() {
       </div>
 
       {/* Stats */}
-      {selectedEventId && items.length > 0 && (
+      {items.length > 0 && (
         <div className="grid grid-cols-3 gap-4">
           {(
             [
@@ -344,9 +363,9 @@ export default function Registrations() {
         </div>
       )}
 
-      {!selectedEventId ? (
+      {!selectedVersionId ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <Text size="sm">Select a version and event to view registrations.</Text>
+          <Text size="sm">Select a version to view registrations.</Text>
         </div>
       ) : (
         <Table

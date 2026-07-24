@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import { Save } from "lucide-react";
 import toast from "react-hot-toast";
-import FormInput from "../../../components/form-field/input-field/InputController";
 import FormSelect from "../../../components/form-field/input-select/SelectController";
 import FormRichText from "../../../components/form-field/rich-text/RichTextController";
 import FormFileUpload from "../../../components/form-field/FormFileUpload";
@@ -16,7 +15,6 @@ import Divider from "../../../shared/design-components/divider/Divider";
 import { Text } from "../../../shared/design-components";
 
 interface AboutFormValues {
-  title: string;
   content: string;
   versionId: string;
   imageUrl: string;
@@ -43,7 +41,6 @@ export default function AboutForm() {
 
   const methods = useForm<AboutFormValues>({
     defaultValues: {
-      title: "",
       content: "",
       versionId: "",
     },
@@ -58,7 +55,6 @@ export default function AboutForm() {
     if (existingData?.data) {
       const section = existingData.data;
       reset({
-        title: section.title,
         content: section.content,
         versionId: section.versionId,
       });
@@ -167,13 +163,6 @@ export default function AboutForm() {
           <div className="p-6 space-y-6">
             {/* Basics */}
             <div className="space-y-6">
-              <FormInput
-                name="title"
-                label="Title"
-                placeholder="About the event"
-                rules={{ required: "Title is required" }}
-              />
-
               <FormRichText
                 name="content"
                 label="Content"
