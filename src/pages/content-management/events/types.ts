@@ -36,7 +36,8 @@ export interface EventItem {
   };
   /** Populated speaker relation (when the API includes it on GET). */
   speakers?: EventSpeaker[];
-  totalSeats: number;
+  /** Optional — null/omitted means unlimited seats (no registration capacity check). */
+  totalSeats: number | null;
   feeType: EventFeeType;
   fee: string;
   location: string;

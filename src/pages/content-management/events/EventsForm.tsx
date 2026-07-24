@@ -288,6 +288,9 @@ export default function EventsForm() {
     // strings, which would make clearing an existing link a silent no-op.
     // set() replaces the loop's value rather than appending a duplicate.
     formData.set("registerLink", (data.registerLink ?? "").trim());
+    // Same deal for totalSeats — blank means "clear to unlimited", which requires
+    // actually sending "" rather than omitting the field.
+    formData.set("totalSeats", data.totalSeats ?? "");
     if (imageFile) {
       formData.append("image", imageFile);
     }
@@ -450,13 +453,11 @@ export default function EventsForm() {
                 name="totalSeats"
                 label="Total Seats"
                 type="number"
-                placeholder="100"
+                placeholder="Leave blank for unlimited"
                 rules={{
-                  required: "Total seats is required",
                   min: { value: 1, message: "Must be at least 1" },
                   max: { value: 100, message: "Total seats must not exceed 100" },
                 }}
-                isRequired
               />
               <FormInput
                 name="displayOrder"
