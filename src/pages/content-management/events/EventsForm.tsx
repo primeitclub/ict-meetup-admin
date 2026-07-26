@@ -133,6 +133,16 @@ export default function EventsForm() {
   } = methods;
 
   const isPaid = watch("feeType") === "paid";
+
+  // The fee input is hidden once the event isn't paid, so any previously-typed
+  // value would otherwise linger in form state and fail the API's "Free events
+  // cannot have a fee" validation on submit — clear it here instead of forcing
+  // the user to flip back to Paid just to blank the (now invisible) field.
+  useEffect(() => {
+    if (!isPaid) {
+      setValue("fee", "", { shouldDirty: false });
+    }
+  }, [isPaid, setValue]);
   const selectedVersionId = watch("versionId");
   const isHighlighted = watch("isHighlighted");
   const selectedEventType = watch("eventType");
