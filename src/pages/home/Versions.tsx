@@ -5,18 +5,24 @@ import type { ColumnDef } from "@tanstack/react-table";
 import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib/use-api-query";
 import { useApiMutation } from "../../lib/use-api-mutation";
+import { usePagination } from "../../lib/hooks/use-pagination";
 import Table from "../../components/table/Table";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import type { FlagshipEventVersion } from "../../types/version";
 import { EventVersionStatus } from "../../types/version";
+import type { PaginationMeta } from "../../types/pagination";
 import toast from "react-hot-toast";
 import { statusColors } from "../../constants";
 import { getImageUrl } from "../../utils/imageUtils";
 
 export default function Versions() {
+  const { page, limit, setPage, setLimit } = usePagination();
+
   const { data, isLoading, refetch } = useApiQuery("versions")<{
-    data: { items: FlagshipEventVersion[] };
-  }>();
+    data: { items: FlagshipEventVersion[]; meta: PaginationMeta };
+  }>({
+    queryParams: { page, limit },
+  });
 
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -139,6 +145,16 @@ export default function Versions() {
         data={data?.data?.items || []}
         searchPlaceholder="Search versions..."
         onRefetch={refetch}
+        pagination={
+          data?.data?.meta && {
+            page: data.data.meta.page,
+            limit: data.data.meta.limit,
+            total: data.data.meta.total,
+            totalPages: data.data.meta.totalPages,
+            onPageChange: setPage,
+            onLimitChange: setLimit,
+          }
+        }
         actionRight={
           <button
             onClick={() => navigate("add")}

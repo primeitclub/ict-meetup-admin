@@ -1,8 +1,9 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { Upload, X } from "lucide-react";
+import { FileText, Upload, X } from "lucide-react";
 import { cn } from "../../shared/utils/cn";
 import FieldLabel from "./FieldLabel";
 import { getImageUrl } from "../../utils/imageUtils";
+import { isImageSizeValid, imageSizeErrorMessage } from "../../utils/fileValidation";
 
 interface FormFileUploadProps {
   name: string;
@@ -15,6 +16,10 @@ interface FormFileUploadProps {
   hint?: string;
   secondaryAction?: { label: string; onClick: () => void };
   error?: string;
+  /** "document" shows a file icon + name instead of rendering `preview` as an <img>. Defaults to "image". */
+  previewKind?: "image" | "document";
+  /** Custom validation run before a file is accepted; return an error string to reject it. Defaults to the shared image-size check. */
+  validate?: (file: File) => string | null;
 }
 
 /**
@@ -32,15 +37,28 @@ export default function FormFileUpload({
   hint,
   secondaryAction,
   error,
+  previewKind = "image",
+  validate = (file) => (isImageSizeValid(file) ? null : imageSizeErrorMessage(file)),
 }: Readonly<FormFileUploadProps>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   const openPicker = () => inputRef.current?.click();
 
+  const acceptFile = (file: File) => {
+    const validationError = validate(file);
+    if (validationError) {
+      setSizeError(validationError);
+      return;
+    }
+    setSizeError(null);
+    onFileChange(file);
+  };
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    onFileChange(file);
+    if (file) acceptFile(file);
     // allow re-picking the same file later
     e.target.value = "";
   };
@@ -49,8 +67,10 @@ export default function FormFileUpload({
     e.preventDefault();
     setIsDragOver(false);
     const file = e.dataTransfer.files?.[0] ?? null;
-    if (file) onFileChange(file);
+    if (file) acceptFile(file);
   };
+
+  const displayError = sizeError || error;
 
   return (
     <div className="w-full">
@@ -71,7 +91,7 @@ export default function FormFileUpload({
           "flex items-center gap-4 rounded-lg border border-dashed bg-background p-4 transition-colors",
           isDragOver
             ? "border-accent bg-accent/5"
-            : error
+            : displayError
               ? "border-red-500"
               : "border-border",
         )}
@@ -79,11 +99,15 @@ export default function FormFileUpload({
         {/* Left thumbnail / icon slot */}
         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface">
           {preview ? (
-            <img
-              src={getImageUrl(preview)}
-              alt="Preview"
-              className="h-full w-full object-contain"
-            />
+            previewKind === "document" ? (
+              <FileText className="text-accent" size={24} />
+            ) : (
+              <img
+                src={getImageUrl(preview)}
+                alt="Preview"
+                className="h-full w-full object-contain"
+              />
+            )
           ) : (
             <Upload className="text-muted-foreground" size={20} />
           )}
@@ -92,6 +116,7 @@ export default function FormFileUpload({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                setSizeError(null);
                 onFileChange(null);
               }}
               className="absolute right-1 top-1 rounded-full bg-red-500 p-0.5 text-white transition-colors hover:bg-red-600"
@@ -106,6 +131,11 @@ export default function FormFileUpload({
         <div className="flex-1 space-y-2">
           <div>
             <p className="text-sm font-semibold text-foreground">{title}</p>
+            {previewKind === "document" && preview && (
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {preview}
+              </p>
+            )}
             {hint && (
               <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
             )}
@@ -141,7 +171,9 @@ export default function FormFileUpload({
         />
       </div>
 
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      {displayError && (
+        <p className="mt-1 text-sm text-red-500">{displayError}</p>
+      )}
     </div>
   );
 }

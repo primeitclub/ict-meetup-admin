@@ -2,6 +2,7 @@ import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { cn } from "../../shared/utils/cn";
 import FieldLabel from "./FieldLabel";
+import { isImageSizeValid, imageSizeErrorMessage } from "../../utils/fileValidation";
 
 export interface ImagePreview {
   /** Stable key for list rendering and removal. */
@@ -36,13 +37,22 @@ export default function MultiImageUpload({
 }: Readonly<MultiImageUploadProps>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   const openPicker = () => inputRef.current?.click();
+
+  const acceptFiles = (files: File[]) => {
+    const oversized = files.filter((f) => !isImageSizeValid(f));
+    const accepted = files.filter((f) => isImageSizeValid(f));
+
+    setSizeError(oversized.length ? imageSizeErrorMessage(oversized[0]) : null);
+    if (accepted.length) onAdd(accepted);
+  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
 
-    if (files.length) onAdd(files);
+    if (files.length) acceptFiles(files);
     // allow re-picking the same file later
     e.target.value = "";
   };
@@ -53,8 +63,10 @@ export default function MultiImageUpload({
     const files = Array.from(e.dataTransfer.files ?? []).filter((f) =>
       f.type.startsWith("image/"),
     );
-    if (files.length) onAdd(files);
+    if (files.length) acceptFiles(files);
   };
+
+  const displayError = sizeError || error;
 
   return (
     <div className="w-full">
@@ -71,7 +83,7 @@ export default function MultiImageUpload({
           "rounded-lg border border-dashed bg-background p-4 transition-colors",
           isDragOver
             ? "border-accent bg-accent/5"
-            : error
+            : displayError
               ? "border-red-500"
               : "border-border",
         )}
@@ -121,7 +133,9 @@ export default function MultiImageUpload({
         />
       </div>
 
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      {displayError && (
+        <p className="mt-1 text-sm text-red-500">{displayError}</p>
+      )}
     </div>
   );
 }

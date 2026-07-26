@@ -181,7 +181,7 @@ export default function GalleryForm() {
             <MultiImageUpload
               label={`Images (${newImages.length}/${GALLERY_MAX_IMAGES})`}
               isRequired
-              hint="SVG, PNG, or JPG. Up to 7 images."
+              hint={`SVG, PNG, or JPG · max 150 KB each · up to ${GALLERY_MAX_IMAGES} images`}
               previews={previews}
               onAdd={handleAdd}
               onRemove={handleRemove}

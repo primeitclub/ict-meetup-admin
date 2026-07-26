@@ -4,6 +4,7 @@ import {
   SocialMediaProfile,
   ContactManagement,
   PaymentSetup,
+  ProposalSetup,
   ClubDetails,
 } from "..";
 
@@ -16,6 +17,7 @@ const SettingsRouter = () => {
         <Route path="social-media-profile" element={<SocialMediaProfile />} />
         <Route path="contact-management" element={<ContactManagement />} />
         <Route path="payment-setup" element={<PaymentSetup />} />
+        <Route path="proposal-setup" element={<ProposalSetup />} />
       </Route>
     </Routes>
   );

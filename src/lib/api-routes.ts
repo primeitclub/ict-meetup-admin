@@ -62,6 +62,7 @@ export const API_ROUTES = {
 
   // ─── Event Registrations ──────────────────────────────────────────────────
   eventRegistrations: "/event-registrations",
+  eventRegistrationStats: "/event-registrations/stats",
   eventRegistrationDetail: "/event-registrations/${registrationId}",
   eventRegistrationStatus: "/event-registrations/${registrationId}/status",
 
@@ -74,6 +75,7 @@ export const API_ROUTES = {
   // Global, non-versioned record (club contact, social links, payment QR code).
   siteSettings: "/site-settings",
   siteSettingsQrCode: "/site-settings/qrcode",
+  siteSettingsProposal: "/site-settings/proposal",
 } as const;
 
 /**
