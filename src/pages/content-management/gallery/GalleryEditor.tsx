@@ -14,6 +14,7 @@ import {
 } from "../../../types/gallery";
 import Divider from "../../../shared/design-components/divider/Divider";
 import { getImageUrl } from "../../../utils/imageUtils";
+import { isImageSizeValid, imageSizeErrorMessage } from "../../../utils/fileValidation";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 import { Text } from "../../../shared/design-components";
 import { cn } from "../../../shared/utils/cn";
@@ -121,7 +122,12 @@ export default function GalleryEditor() {
       toast.error(err.message || "Failed to remove image"),
   });
 
-  const handleAddFiles = (files: File[]) => {
+  const handleAddFiles = (rawFiles: File[]) => {
+    const oversized = rawFiles.filter((f) => !isImageSizeValid(f));
+    if (oversized.length) toast.error(imageSizeErrorMessage(oversized[0]));
+    const files = rawFiles.filter((f) => isImageSizeValid(f));
+    if (!files.length) return;
+
     setImages((prev) => {
       const room = GALLERY_MAX_IMAGES - prev.length;
       if (room <= 0) {
@@ -269,9 +275,14 @@ export default function GalleryEditor() {
             <Divider />
 
             <div className="flex items-center justify-between">
-              <Text size="sm" variant="muted">
-                Images ({images.length}/{GALLERY_MAX_IMAGES})
-              </Text>
+              <div className="space-y-0.5">
+                <Text size="sm" variant="muted">
+                  Images ({images.length}/{GALLERY_MAX_IMAGES})
+                </Text>
+                <Text size="xs" variant="muted">
+                  SVG, PNG, or JPG · max 150 KB each
+                </Text>
+              </div>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}

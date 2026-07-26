@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { Plus, Layers, BadgeCheck } from "lucide-react";
@@ -7,8 +7,10 @@ import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import { useVersionFilter } from "../../lib/hooks/use-version-filter";
+import { usePagination } from "../../lib/hooks/use-pagination";
 import VersionSelectFilter from "../../components/VersionSelectFilter";
 import type { TeamMember, TeamCategory, Designation } from "../../types/team";
+import type { PaginationMeta } from "../../types/pagination";
 import toast from "react-hot-toast";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 
@@ -16,11 +18,20 @@ export default function Teams() {
   const navigate = useNavigate();
   const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
     useVersionFilter();
+  const { page, limit, setPage, setLimit, reset: resetPage } = usePagination();
+
+  useEffect(() => {
+    resetPage();
+  }, [selectedVersionId, resetPage]);
 
   const { data, isLoading, refetch } = useApiQuery("teams")<{
-    data: { items: TeamMember[] };
+    data: { items: TeamMember[]; meta: PaginationMeta };
   }>({
-    queryParams: selectedVersionId ? { versionId: selectedVersionId } : {},
+    queryParams: {
+      page,
+      limit,
+      ...(selectedVersionId ? { versionId: selectedVersionId } : {}),
+    },
   });
 
   // Lookup data so we can label ids even when the list omits nested relations.
@@ -137,6 +148,7 @@ export default function Teams() {
   );
 
   const items = data?.data?.items ?? [];
+  const meta = data?.data?.meta;
 
   return (
     <div className="space-y-6">
@@ -145,6 +157,16 @@ export default function Teams() {
         data={items}
         onRefetch={refetch}
         searchPlaceholder="Search team members..."
+        pagination={
+          meta && {
+            page: meta.page,
+            limit: meta.limit,
+            total: meta.total,
+            totalPages: meta.totalPages,
+            onPageChange: setPage,
+            onLimitChange: setLimit,
+          }
+        }
         actionRight={
           <div className="flex items-center gap-2">
             <VersionSelectFilter

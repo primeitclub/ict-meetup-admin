@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { Plus, Image as ImageIcon } from "lucide-react";
@@ -9,18 +9,36 @@ import TableRowActions from "../../../components/table/TableRowActions";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
 import { useVersionFilter } from "../../../lib/hooks/use-version-filter";
+import { usePagination } from "../../../lib/hooks/use-pagination";
 import VersionSelectFilter from "../../../components/VersionSelectFilter";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 import { normalizeGalleryImages, type GalleryItem } from "../../../types/gallery";
+import type { PaginationMeta } from "../../../types/pagination";
 
 export default function Gallery() {
   const navigate = useNavigate();
   const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
     useVersionFilter();
+  const { page, limit, setPage, setLimit, reset: resetPage } = usePagination();
 
+  useEffect(() => {
+    resetPage();
+  }, [selectedVersionId, resetPage]);
+
+  // Was filtering all-versions' galleries client-side after an unpaginated
+  // fetch; now filters server-side like every other version-scoped list so
+  // the added pagination meta (total/totalPages) stays accurate.
+  // Note: unlike every other module, this endpoint's query param is
+  // `version_id` (snake_case) — see gallery.validator.ts `galleryQuerySchema`.
   const { data, isLoading, refetch } = useApiQuery("gallery")<{
-    data: { items: GalleryItem[] };
-  }>();
+    data: { items: GalleryItem[]; meta: PaginationMeta };
+  }>({
+    queryParams: {
+      page,
+      limit,
+      ...(selectedVersionId ? { version_id: selectedVersionId } : {}),
+    },
+  });
 
   const versionNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -118,10 +136,8 @@ export default function Gallery() {
     [handleDelete, versionNameById],
   );
 
-  const allItems = data?.data?.items ?? [];
-  const items = selectedVersionId
-    ? allItems.filter((i) => i.flagshipEventVersionId === selectedVersionId)
-    : allItems;
+  const items = data?.data?.items ?? [];
+  const meta = data?.data?.meta;
 
   return (
     <div className="space-y-6">
@@ -130,6 +146,16 @@ export default function Gallery() {
         data={items}
         onRefetch={refetch}
         searchPlaceholder="Search gallery..."
+        pagination={
+          meta && {
+            page: meta.page,
+            limit: meta.limit,
+            total: meta.total,
+            totalPages: meta.totalPages,
+            onPageChange: setPage,
+            onLimitChange: setLimit,
+          }
+        }
         actionRight={
           <div className="flex items-center gap-3">
             <VersionSelectFilter
