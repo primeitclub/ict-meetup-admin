@@ -7,15 +7,20 @@ import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
+import { usePagination } from "../../lib/hooks/use-pagination";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import type { SponsorCategory } from "../../types/sponsor";
+import type { PaginationMeta } from "../../types/pagination";
 
 export default function Categories() {
   const navigate = useNavigate();
+  const { page, limit, setPage, setLimit } = usePagination();
 
   const { data, isLoading, refetch } = useApiQuery("sponsorCategories")<{
-    data: { items: SponsorCategory[] };
-  }>();
+    data: { items: SponsorCategory[]; meta: PaginationMeta };
+  }>({
+    queryParams: { page, limit },
+  });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -81,6 +86,7 @@ export default function Categories() {
   );
 
   const items = data?.data?.items ?? [];
+  const meta = data?.data?.meta;
 
   return (
     <div className="space-y-6">
@@ -89,6 +95,16 @@ export default function Categories() {
         data={items}
         onRefetch={refetch}
         searchPlaceholder="Search categories..."
+        pagination={
+          meta && {
+            page: meta.page,
+            limit: meta.limit,
+            total: meta.total,
+            totalPages: meta.totalPages,
+            onPageChange: setPage,
+            onLimitChange: setLimit,
+          }
+        }
         actionRight={
           <div className="flex items-center gap-2">
             <button

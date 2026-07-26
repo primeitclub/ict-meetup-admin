@@ -6,16 +6,21 @@ import Table from "../../../components/table/Table";
 import TableRowActions from "../../../components/table/TableRowActions";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
+import { usePagination } from "../../../lib/hooks/use-pagination";
 import type { EventCategory } from "./types";
+import type { PaginationMeta } from "../../../types/pagination";
 import toast from "react-hot-toast";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 
 export default function EventCategories() {
   const navigate = useNavigate();
+  const { page, limit, setPage, setLimit } = usePagination();
 
   const { data, isLoading, refetch } = useApiQuery("eventCategories")<{
-    data: { items: EventCategory[] };
-  }>();
+    data: { items: EventCategory[]; meta: PaginationMeta };
+  }>({
+    queryParams: { page, limit },
+  });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -87,6 +92,7 @@ export default function EventCategories() {
   );
 
   const items = data?.data?.items ?? [];
+  const meta = data?.data?.meta;
 
   return (
     <div className="space-y-6">
@@ -94,6 +100,16 @@ export default function EventCategories() {
         columns={columns}
         data={items}
         onRefetch={refetch}
+        pagination={
+          meta && {
+            page: meta.page,
+            limit: meta.limit,
+            total: meta.total,
+            totalPages: meta.totalPages,
+            onPageChange: setPage,
+            onLimitChange: setLimit,
+          }
+        }
         actionRight={
           <div className="flex items-center gap-2">
             <button
