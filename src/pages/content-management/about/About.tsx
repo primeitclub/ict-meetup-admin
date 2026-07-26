@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../../utils/imageUtils";
@@ -8,8 +8,10 @@ import TableRowActions from "../../../components/table/TableRowActions";
 import { useApiQuery } from "../../../lib";
 import { useApiMutation } from "../../../lib/use-api-mutation";
 import { useVersionFilter } from "../../../lib/hooks/use-version-filter";
+import { usePagination } from "../../../lib/hooks/use-pagination";
 import VersionSelectFilter from "../../../components/VersionSelectFilter";
 import type { AboutSection } from "./types";
+import type { PaginationMeta } from "../../../types/pagination";
 import toast from "react-hot-toast";
 import ConfirmDialog from "../../../shared/design-components/dialog/ConfirmDialog";
 import { htmlToPlainText } from "../../../shared/utils/html";
@@ -18,11 +20,20 @@ export default function About() {
   const navigate = useNavigate();
   const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
     useVersionFilter();
+  const { page, limit, setPage, setLimit, reset: resetPage } = usePagination();
+
+  useEffect(() => {
+    resetPage();
+  }, [selectedVersionId, resetPage]);
 
   const { data, isLoading, refetch } = useApiQuery("about")<{
-    data: { items: AboutSection[] };
+    data: { items: AboutSection[]; meta: PaginationMeta };
   }>({
-    queryParams: selectedVersionId ? { versionId: selectedVersionId } : {},
+    queryParams: {
+      page,
+      limit,
+      ...(selectedVersionId ? { versionId: selectedVersionId } : {}),
+    },
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -123,6 +134,7 @@ export default function About() {
   );
 
   const items = data?.data?.items ?? [];
+  const meta = data?.data?.meta;
 
   return (
     <div className="space-y-6">
@@ -130,6 +142,16 @@ export default function About() {
         columns={columns}
         data={items}
         onRefetch={refetch}
+        pagination={
+          meta && {
+            page: meta.page,
+            limit: meta.limit,
+            total: meta.total,
+            totalPages: meta.totalPages,
+            onPageChange: setPage,
+            onLimitChange: setLimit,
+          }
+        }
         actionRight={
           <div className="flex items-center gap-3">
             <VersionSelectFilter

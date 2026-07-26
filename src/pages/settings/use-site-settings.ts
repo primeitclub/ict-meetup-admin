@@ -5,8 +5,8 @@ import type { SiteSettings } from "../../types/settings";
 
 /**
  * Loads and saves the single global site-settings record (Club Details,
- * Social Media, Payment Setup tabs). There is no version picker here —
- * unlike Contact Management, this data is not versioned.
+ * Social Media, Payment Setup, Proposal Setup tabs). There is no version
+ * picker here — unlike Contact Management, this data is not versioned.
  */
 export function useSiteSettings() {
   const { data, isLoading, refetch } = useApiQuery("siteSettings")<{
@@ -39,6 +39,18 @@ export function useSiteSettings() {
     onError: (err) => toast.error(err.message || "Failed to remove QR code"),
   });
 
+  const { execute: removeProposal, isLoading: isRemovingProposal } = useApiMutation(
+    "siteSettingsProposal",
+  )<{ data: SiteSettings }, never>({
+    method: "DELETE",
+    invalidateRoutes: ["siteSettings"],
+    onSuccess: () => {
+      toast.success("Proposal removed");
+      refetch();
+    },
+    onError: (err) => toast.error(err.message || "Failed to remove proposal"),
+  });
+
   const save = async (build: (fd: FormData) => void) => {
     const formData = new FormData();
     build(formData);
@@ -53,6 +65,8 @@ export function useSiteSettings() {
     isSaving,
     removeQrCode,
     isRemovingQrCode,
+    removeProposal,
+    isRemovingProposal,
     refetch,
   };
 }

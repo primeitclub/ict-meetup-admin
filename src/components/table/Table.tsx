@@ -3,14 +3,24 @@ import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Search, RefreshCw, Inbox } from "lucide-react";
+import { Search, RefreshCw, Inbox, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Tooltip from "../../shared/design-components/tooltip/Tooltip";
 import ScrollArea from "../../shared/design-components/scroll-area/ScrollArea";
+
+/** Server-side pagination state, driven by the API's `meta` envelope. */
+export interface TablePaginationProps {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
+  pageSizeOptions?: number[];
+}
 
 interface TableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -20,6 +30,17 @@ interface TableProps<TData, TValue> {
   searchPlaceholder?: string;
   onRefetch?: () => void;
   actionRight?: ReactNode;
+  /** When provided, renders page controls below the table instead of showing only the first page of `data`. */
+  pagination?: TablePaginationProps;
+  /**
+   * Keep every cell on one line and let the table grow past its container
+   * width, so the horizontal scrollbar actually activates instead of
+   * wrapping cell text to cram into 100% width. Opt-in only — most tables
+   * have few enough columns that wrapping looks fine, and some columns
+   * (long descriptions) rely on wrapping. Turn on for wide, many-column
+   * tables like Registrations.
+   */
+  nowrap?: boolean;
 }
 
 export default function Table<TData, TValue>({
@@ -30,6 +51,8 @@ export default function Table<TData, TValue>({
   onRefetch,
   isLoading,
   actionRight,
+  pagination,
+  nowrap = false,
 }: Readonly<TableProps<TData, TValue>>) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [refreshSpins, setRefreshSpins] = useState(0);
@@ -44,7 +67,6 @@ export default function Table<TData, TValue>({
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   if (isLoading) {
@@ -99,9 +121,12 @@ export default function Table<TData, TValue>({
       </div>
       <ScrollArea
         orientation="horizontal"
+        type={nowrap ? "always" : "hover"}
         className="w-full rounded-lg border border-border bg-surface"
       >
-        <table className="w-full text-sm text-left align-middle ">
+        <table
+          className={`${nowrap ? "min-w-full" : "w-full"} text-sm text-left align-middle`}
+        >
           <thead className="text-foreground bg-surface-2 whitespace-nowrap">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -121,7 +146,9 @@ export default function Table<TData, TValue>({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody
+            className={`divide-y divide-border ${nowrap ? "whitespace-nowrap" : ""}`}
+          >
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
                 <tr
@@ -159,45 +186,74 @@ export default function Table<TData, TValue>({
         </table>
       </ScrollArea>
 
-      {/* Pagination UI */}
-      {/* <div className="flex items-center justify-between text-sm text-gray-400 mt-4">
-        <div className="flex items-center space-x-2">
-          <span>
-            Page <span className="font-medium text-white">{table.getState().pagination.pageIndex + 1}</span> of{" "}
-            <span className="font-medium text-white">{table.getPageCount() || 1}</span>
-          </span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => {
-              table.setPageSize(Number(e.target.value));
-            }}
-            className="bg-admin-primary border border-gray-800 text-white rounded p-1 outline-none focus:border-admin-secondary transition-colors"
-          >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
-        </div>
+      {pagination && pagination.total > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span>
+              Showing{" "}
+              <span className="font-medium text-foreground">
+                {(pagination.page - 1) * pagination.limit + 1}
+              </span>
+              {"–"}
+              <span className="font-medium text-foreground">
+                {Math.min(pagination.page * pagination.limit, pagination.total)}
+              </span>{" "}
+              of{" "}
+              <span className="font-medium text-foreground">
+                {pagination.total}
+              </span>
+            </span>
+            {pagination.onLimitChange && (
+              <select
+                value={pagination.limit}
+                onChange={(e) =>
+                  pagination.onLimitChange?.(Number(e.target.value))
+                }
+                className="bg-surface border border-border text-foreground rounded-lg p-1.5 outline-none focus:border-muted-foreground transition-colors"
+              >
+                {(pagination.pageSizeOptions ?? [10, 20, 50, 100]).map(
+                  (size) => (
+                    <option key={size} value={size}>
+                      Show {size}
+                    </option>
+                  ),
+                )}
+              </select>
+            )}
+          </div>
 
-        <div className="flex space-x-2">
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="px-3 py-1 rounded border border-gray-800 bg-admin-primary text-gray-300 hover:bg-[#1E1E1E] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="px-3 py-1 rounded border border-gray-800 bg-admin-primary text-gray-300 hover:bg-[#1E1E1E] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            Next
-          </button>
+          <div className="flex items-center gap-3">
+            <span>
+              Page{" "}
+              <span className="font-medium text-foreground">
+                {pagination.page}
+              </span>{" "}
+              of{" "}
+              <span className="font-medium text-foreground">
+                {Math.max(pagination.totalPages, 1)}
+              </span>
+            </span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => pagination.onPageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
+                className="p-2 rounded-lg border border-border bg-surface text-foreground hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => pagination.onPageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.totalPages}
+                className="p-2 rounded-lg border border-border bg-surface text-foreground hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
         </div>
-      </div> */}
+      )}
     </div>
   );
 }

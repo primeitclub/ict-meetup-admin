@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { Plus, Tags, ImageIcon } from "lucide-react";
@@ -9,20 +9,28 @@ import TableRowActions from "../../components/table/TableRowActions";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import { useVersionFilter } from "../../lib/hooks/use-version-filter";
+import { usePagination } from "../../lib/hooks/use-pagination";
 import VersionSelectFilter from "../../components/VersionSelectFilter";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import type { Sponsor } from "../../types/sponsor";
+import type { PaginationMeta } from "../../types/pagination";
 
 export default function AllSponsors() {
   const navigate = useNavigate();
   const { selectedVersionId, setSelectedVersionId, versionOptions, versionsLoading } =
     useVersionFilter();
+  const { page, limit, setPage, setLimit, reset: resetPage } = usePagination();
+
+  useEffect(() => {
+    resetPage();
+  }, [selectedVersionId, resetPage]);
 
   const { data, isLoading, refetch } = useApiQuery("sponsors")<{
-    data: { items: Sponsor[] };
+    data: { items: Sponsor[]; meta: PaginationMeta };
   }>({
     queryParams: {
-      limit: 100,
+      page,
+      limit,
       ...(selectedVersionId ? { versionId: selectedVersionId } : {}),
     },
   });
@@ -139,6 +147,7 @@ export default function AllSponsors() {
   );
 
   const items = data?.data?.items ?? [];
+  const meta = data?.data?.meta;
 
   return (
     <div className="space-y-6">
@@ -147,6 +156,16 @@ export default function AllSponsors() {
         data={items}
         onRefetch={refetch}
         searchPlaceholder="Search sponsors..."
+        pagination={
+          meta && {
+            page: meta.page,
+            limit: meta.limit,
+            total: meta.total,
+            totalPages: meta.totalPages,
+            onPageChange: setPage,
+            onLimitChange: setLimit,
+          }
+        }
         actionRight={
           <div className="flex items-center gap-2">
             <VersionSelectFilter

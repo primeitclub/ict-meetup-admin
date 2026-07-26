@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import FormInput from "../../components/form-field/input-field/InputController";
 import { useApiMutation } from "../../lib/use-api-mutation";
 import { useApiQuery } from "../../lib";
+import { usePagination } from "../../lib/hooks/use-pagination";
 import Divider from "../../shared/design-components/divider/Divider";
 import { Text } from "../../shared/design-components";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
@@ -14,6 +15,7 @@ import Table from "../../components/table/Table";
 import TableRowActions from "../../components/table/TableRowActions";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Settings } from "../../types/settings";
+import type { PaginationMeta } from "../../types/pagination";
 import { ArrowLeft } from "lucide-react";
 
 interface ContactPerson {
@@ -95,14 +97,17 @@ export default function ContactManagement() {
   const { control, handleSubmit, reset } = methods;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { page, limit, setPage, setLimit } = usePagination();
 
   const { data: allSettingsData, isLoading: isLoadingAll, refetch: refetchAll } = useApiQuery("settings")<{
-    data: { items: Settings[] };
+    data: { items: Settings[]; meta: PaginationMeta };
   }>({
+    queryParams: { page, limit },
     enabled: !isFormOpen,
   });
 
   const tableData = allSettingsData?.data?.items ?? [];
+  const tableMeta = allSettingsData?.data?.meta;
 
   const columns: ColumnDef<Settings>[] = useMemo(
     () => [
@@ -216,6 +221,16 @@ export default function ContactManagement() {
           data={tableData}
           onRefetch={refetchAll}
           searchPlaceholder="Search contact management..."
+          pagination={
+            tableMeta && {
+              page: tableMeta.page,
+              limit: tableMeta.limit,
+              total: tableMeta.total,
+              totalPages: tableMeta.totalPages,
+              onPageChange: setPage,
+              onLimitChange: setLimit,
+            }
+          }
           actionRight={
             <button
               onClick={() => {

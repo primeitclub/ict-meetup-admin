@@ -46,6 +46,8 @@ export interface SiteSettings {
   socialMediaLinks: SocialMediaLink[] | null;
   /** Cloudinary URL — use this to display the QR code. */
   qrCodeUrl: string | null;
+  /** Cloudinary URL — use this to view/download the sponsorship proposal PDF. */
+  proposalUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }

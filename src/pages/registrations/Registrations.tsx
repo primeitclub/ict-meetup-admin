@@ -5,12 +5,14 @@ import toast from "react-hot-toast";
 import Table from "../../components/table/Table";
 import { useApiQuery } from "../../lib";
 import { useApiMutation } from "../../lib/use-api-mutation";
+import { usePagination } from "../../lib/hooks/use-pagination";
 import ConfirmDialog from "../../shared/design-components/dialog/ConfirmDialog";
 import { Text } from "../../shared/design-components";
 import {
   RegistrationStatus,
   type EventRegistration,
 } from "../../types/registration";
+import type { PaginationMeta } from "../../types/pagination";
 import TeamMembersDialog from "./TeamMembersDialog";
 import type { EventItem } from "../content-management/events/types";
 import useGetVersionOptions from "../../lib/hooks/use-get-version-options";
@@ -34,6 +36,11 @@ export default function Registrations() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [teamRegistration, setTeamRegistration] =
     useState<EventRegistration | null>(null);
+  const { page, limit, setPage, setLimit, reset: resetPage } = usePagination();
+
+  useEffect(() => {
+    resetPage();
+  }, [selectedVersionId, selectedEventId, resetPage]);
 
   const { data: eventsData, isLoading: eventsLoading } = useApiQuery(
     "events",
@@ -55,11 +62,24 @@ export default function Registrations() {
 
   const { data, isLoading, refetch } = useApiQuery(
     "eventRegistrations",
-  )<{ data: { items: EventRegistration[] } }>({
+  )<{ data: { items: EventRegistration[]; meta: PaginationMeta } }>({
     queryParams: {
       versionId: selectedVersionId,
       eventId: selectedEventId || undefined,
-      limit: 100,
+      page,
+      limit,
+    },
+    enabled: !!selectedVersionId,
+  });
+
+  const { data: statsData, refetch: refetchStats } = useApiQuery(
+    "eventRegistrationStats",
+  )<{
+    data: { pending: number; approved: number; rejected: number };
+  }>({
+    queryParams: {
+      versionId: selectedVersionId,
+      eventId: selectedEventId || undefined,
     },
     enabled: !!selectedVersionId,
   });
@@ -70,6 +90,7 @@ export default function Registrations() {
     method: "PUT",
     onSuccess: () => {
       refetch();
+      refetchStats();
       setConfirmApprove(null);
       setConfirmReject(null);
     },
@@ -82,6 +103,7 @@ export default function Registrations() {
     method: "DELETE",
     onSuccess: () => {
       refetch();
+      refetchStats();
       setConfirmDelete(null);
     },
     onError: (err) => toast.error(err.message || "Failed to delete registration"),
@@ -282,14 +304,9 @@ export default function Registrations() {
   );
 
   const items = data?.data?.items ?? [];
+  const meta = data?.data?.meta;
 
-  const statusCounts = useMemo(() => {
-    const counts = { pending: 0, approved: 0, rejected: 0 };
-    items.forEach((r) => {
-      if (r.status in counts) counts[r.status as keyof typeof counts]++;
-    });
-    return counts;
-  }, [items]);
+  const statusCounts = statsData?.data ?? { pending: 0, approved: 0, rejected: 0 };
 
   return (
     <div className="space-y-6">
@@ -374,6 +391,17 @@ export default function Registrations() {
           isLoading={isLoading}
           onRefetch={refetch}
           searchPlaceholder="Search registrations…"
+          nowrap
+          pagination={
+            meta && {
+              page: meta.page,
+              limit: meta.limit,
+              total: meta.total,
+              totalPages: meta.totalPages,
+              onPageChange: setPage,
+              onLimitChange: setLimit,
+            }
+          }
         />
       )}
 
