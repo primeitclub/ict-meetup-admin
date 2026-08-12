@@ -51,6 +51,7 @@ export interface EventItem {
   imageUrl: string | null;
   isHighlighted: boolean;
   eventType: EventType;
+  minParticipants: number | null;
   maxParticipants: number | null;
   /** Optional external registration URL; overrides the in-app register flow. */
   registerLink: string | null;
