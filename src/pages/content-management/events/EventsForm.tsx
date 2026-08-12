@@ -47,6 +47,7 @@ interface EventFormValues {
   displayOrder: string;
   isHighlighted: boolean;
   eventType: EventType | "";
+  minParticipants: string;
   maxParticipants: string;
   registerLink: string;
 }
@@ -119,6 +120,7 @@ export default function EventsForm() {
       displayOrder: "",
       isHighlighted: false,
       eventType: "",
+      minParticipants: "",
       maxParticipants: "",
       registerLink: "",
     },
@@ -230,6 +232,7 @@ export default function EventsForm() {
         displayOrder: ev.displayOrder?.toString() ?? "",
         isHighlighted: ev.isHighlighted ?? false,
         eventType: ev.eventType ?? "",
+        minParticipants: ev.minParticipants?.toString() ?? "",
         maxParticipants: ev.maxParticipants?.toString() ?? "",
         registerLink: ev.registerLink ?? "",
       });
@@ -301,6 +304,12 @@ export default function EventsForm() {
     // Same deal for totalSeats — blank means "clear to unlimited", which requires
     // actually sending "" rather than omitting the field.
     formData.set("totalSeats", data.totalSeats ?? "");
+    
+    // Explicitly send an empty fee if the event is free, so the backend clears it
+    if (data.feeType === "free") {
+      formData.set("fee", "");
+    }
+
     if (imageFile) {
       formData.append("image", imageFile);
     }
@@ -493,18 +502,32 @@ export default function EventsForm() {
                 rules={{ required: "Event type is required" }}
               />
               {isGroup && (
-                <FormInput
-                  name="maxParticipants"
-                  label="Max Participants per Team"
-                  type="number"
-                  placeholder="e.g. 4"
-                  rules={{
-                    required: "Max participants is required for group events",
-                    min: { value: 1, message: "Must be at least 1" },
-                    max: { value: 20, message: "Cannot exceed 20 participants" },
-                  }}
-                  isRequired
-                />
+                <>
+                  <FormInput
+                    name="minParticipants"
+                    label="Min Participants per Team"
+                    type="number"
+                    placeholder="e.g. 2"
+                    rules={{
+                      required: "Min participants is required for group events",
+                      min: { value: 1, message: "Must be at least 1" },
+                      max: { value: 20, message: "Cannot exceed 20 participants" },
+                    }}
+                    isRequired
+                  />
+                  <FormInput
+                    name="maxParticipants"
+                    label="Max Participants per Team"
+                    type="number"
+                    placeholder="e.g. 4"
+                    rules={{
+                      required: "Max participants is required for group events",
+                      min: { value: 1, message: "Must be at least 1" },
+                      max: { value: 20, message: "Cannot exceed 20 participants" },
+                    }}
+                    isRequired
+                  />
+                </>
               )}
             </div>
 
