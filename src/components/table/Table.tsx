@@ -186,74 +186,81 @@ export default function Table<TData, TValue>({
         </table>
       </ScrollArea>
 
-      {pagination && pagination.total > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <span>
-              Showing{" "}
-              <span className="font-medium text-foreground">
-                {(pagination.page - 1) * pagination.limit + 1}
-              </span>
-              {"–"}
-              <span className="font-medium text-foreground">
-                {Math.min(pagination.page * pagination.limit, pagination.total)}
-              </span>{" "}
-              of{" "}
-              <span className="font-medium text-foreground">
-                {pagination.total}
-              </span>
-            </span>
-            {pagination.onLimitChange && (
-              <select
-                value={pagination.limit}
-                onChange={(e) =>
-                  pagination.onLimitChange?.(Number(e.target.value))
-                }
-                className="bg-surface border border-border text-foreground rounded-lg p-1.5 outline-none focus:border-muted-foreground transition-colors"
-              >
-                {(pagination.pageSizeOptions ?? [10, 20, 50, 100]).map(
-                  (size) => (
-                    <option key={size} value={size}>
-                      Show {size}
-                    </option>
-                  ),
-                )}
-              </select>
-            )}
-          </div>
+      {pagination && Number(pagination.total) > 0 && (() => {
+        const currentPage = Number(pagination.page) || 1;
+        const currentLimit = Number(pagination.limit) || 10;
+        const totalItems = Number(pagination.total) || 0;
+        const totalPages = Number(pagination.totalPages) || 1;
 
-          <div className="flex items-center gap-3">
-            <span>
-              Page{" "}
-              <span className="font-medium text-foreground">
-                {pagination.page}
-              </span>{" "}
-              of{" "}
-              <span className="font-medium text-foreground">
-                {Math.max(pagination.totalPages, 1)}
+        return (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <span>
+                Showing{" "}
+                <span className="font-medium text-foreground">
+                  {(currentPage - 1) * currentLimit + 1}
+                </span>
+                {"–"}
+                <span className="font-medium text-foreground">
+                  {Math.min(currentPage * currentLimit, totalItems)}
+                </span>{" "}
+                of{" "}
+                <span className="font-medium text-foreground">
+                  {totalItems}
+                </span>
               </span>
-            </span>
-            <div className="flex gap-1">
-              <button
-                onClick={() => pagination.onPageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-                className="p-2 rounded-lg border border-border bg-surface text-foreground hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                aria-label="Previous page"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                onClick={() => pagination.onPageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages}
-                className="p-2 rounded-lg border border-border bg-surface text-foreground hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                aria-label="Next page"
-              >
-                <ChevronRight size={16} />
-              </button>
+              {pagination.onLimitChange && (
+                <select
+                  value={currentLimit}
+                  onChange={(e) =>
+                    pagination.onLimitChange?.(Number(e.target.value))
+                  }
+                  className="bg-surface border border-border text-foreground rounded-lg p-1.5 outline-none focus:border-muted-foreground transition-colors"
+                >
+                  {(pagination.pageSizeOptions ?? [10, 20, 50, 100]).map(
+                    (size) => (
+                      <option key={size} value={size}>
+                        Show {size}
+                      </option>
+                    ),
+                  )}
+                </select>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span>
+                Page{" "}
+                <span className="font-medium text-foreground">
+                  {currentPage}
+                </span>{" "}
+                of{" "}
+                <span className="font-medium text-foreground">
+                  {Math.max(totalPages, 1)}
+                </span>
+              </span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => pagination.onPageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="p-2 rounded-lg border border-border bg-surface text-foreground hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => pagination.onPageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="p-2 rounded-lg border border-border bg-surface text-foreground hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Next page"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
