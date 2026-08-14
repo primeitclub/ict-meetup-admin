@@ -7,15 +7,22 @@ import { useCallback, useState } from "react";
  * land on a now-out-of-range page.
  */
 export function usePagination(initialLimit = 10) {
-  const [page, setPage] = useState(1);
+  const [page, setPageState] = useState(1);
   const [limit, setLimitState] = useState(initialLimit);
 
-  const setLimit = useCallback((next: number) => {
-    setLimitState(next);
-    setPage(1);
+  const setPage = useCallback((next: number | string | ((prev: number) => number)) => {
+    setPageState((prev) => {
+      const val = typeof next === "function" ? next(prev) : next;
+      return Number(val) || 1;
+    });
   }, []);
 
-  const reset = useCallback(() => setPage(1), []);
+  const setLimit = useCallback((next: number | string) => {
+    setLimitState(Number(next) || initialLimit);
+    setPageState(1);
+  }, [initialLimit]);
+
+  const reset = useCallback(() => setPageState(1), []);
 
   return { page, limit, setPage, setLimit, reset };
 }
