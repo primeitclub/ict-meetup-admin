@@ -63,7 +63,7 @@ export default function TeamMembersDialog({
                   </div>
                   <dl className="mt-2 space-y-1 pl-8 text-xs">
                     <div className="flex gap-2">
-                      <dt className="w-14 shrink-0 text-muted-foreground">
+                      <dt className="w-16 shrink-0 text-muted-foreground">
                         Email
                       </dt>
                       <dd className="break-all text-foreground">
@@ -71,13 +71,33 @@ export default function TeamMembersDialog({
                       </dd>
                     </div>
                     <div className="flex gap-2">
-                      <dt className="w-14 shrink-0 text-muted-foreground">
+                      <dt className="w-16 shrink-0 text-muted-foreground">
                         Phone
                       </dt>
                       <dd className="text-foreground">
                         {participant.phoneNumber || "—"}
                       </dd>
                     </div>
+                    {participant.inGameName && (
+                      <div className="flex gap-2">
+                        <dt className="w-16 shrink-0 text-muted-foreground font-medium text-accent">
+                          IGN
+                        </dt>
+                        <dd className="font-semibold text-foreground">
+                          {participant.inGameName}
+                        </dd>
+                      </div>
+                    )}
+                    {participant.inGameId && (
+                      <div className="flex gap-2">
+                        <dt className="w-16 shrink-0 text-muted-foreground">
+                          Game ID
+                        </dt>
+                        <dd className="text-foreground font-mono">
+                          {participant.inGameId}
+                        </dd>
+                      </div>
+                    )}
                   </dl>
                 </div>
               ))

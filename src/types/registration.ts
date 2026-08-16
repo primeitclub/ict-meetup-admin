@@ -11,6 +11,8 @@ export interface Participant {
   fullName: string;
   email: string;
   phoneNumber?: string | null;
+  inGameName?: string | null;
+  inGameId?: string | null;
 }
 
 export interface EventRegistration {
