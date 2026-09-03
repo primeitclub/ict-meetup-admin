@@ -152,23 +152,18 @@ export default function EventsForm() {
   const eventDate = watch("date");
   const registrationDeadline = watch("registrationDeadline");
 
-  // Keep the two pickers mutually exclusive at the UI level — disabling the
-  // invalid days is more reliable than showing a validation error after the
-  // fact, and matches the API's "deadline must be before the event date" rule.
+  // Keep the two pickers aligned — disabling invalid days ensures the registration
+  // deadline cannot be set after the event date.
   const minEventDate = useMemo(() => {
     const deadline = parseDate(registrationDeadline);
     if (!deadline) return undefined;
-    const next = new Date(deadline);
-    next.setDate(next.getDate() + 1);
-    return next;
+    return deadline;
   }, [registrationDeadline]);
 
   const maxRegistrationDeadline = useMemo(() => {
     const date = parseDate(eventDate);
     if (!date) return undefined;
-    const prev = new Date(date);
-    prev.setDate(prev.getDate() - 1);
-    return prev;
+    return date;
   }, [eventDate]);
 
   const { data: speakersData, isLoading: speakersLoading } = useApiQuery(
